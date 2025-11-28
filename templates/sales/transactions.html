@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Riwayat Transaksi{% endblock %}
+
+{% block content %}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filter Transaksi</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="date" class="form-label">Tanggal</label>
+                <input type="date" class="form-control" id="date" name="date" value="{{ date_filter }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">Filter</button>
+                <a href="{{ url_for('sales.transactions') }}" class="btn btn-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Daftar Transaksi</h6>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group me-2">
+                    <a href="{{ url_for('sales.pos') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i> Transaksi Baru
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if transactions.items %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="transactionsTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pelanggan</th>
+                        <th>Total</th>
+                        <th>Metode Pembayaran</th>
+                        <th>Tanggal</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions.items %}
+                    <tr>
+                        <td>{{ transaction.id }}</td>
+                        <td>{{ transaction.customer.name if transaction.customer else 'Pelanggan Umum' }}</td>
+                        <td>Rp {{ "{:,.0f}".format(transaction.total_amount) }}</td>
+                        <td>
+                            {% if transaction.payment_method == 'cash' %}
+                            <span class="badge bg-success">Tunai</span>
+                            {% elif transaction.payment_method == 'card' %}
+                            <span class="badge bg-info">Kartu</span>
+                            {% else %}
+                            <span class="badge bg-warning">Transfer</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="table-actions">
+                            <a href="{{ url_for('sales.transaction_detail', id=transaction.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if transactions.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('sales.transactions', page=transactions.prev_num, date=date_filter) }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+                {% endif %}
+                
+                {% for page_num in transactions.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != transactions.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('sales.transactions', page=page_num, date=date_filter) }}">{{ page_num }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if transactions.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('sales.transactions', page=transactions.next_num, date=date_filter) }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <p>Belum ada transaksi. <a href="{{ url_for('sales.pos') }}">Buat transaksi pertama</a>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Sertakan file JS yang baru kita buat -->
+<script src="{{ url_for('static', filename='js/dataTables-init.js') }}"></script>
+
+<script>
+    $(document).ready(function() {
+        // Inisialisasi DataTable untuk tabel transaksi
+        initializeDataTable('transactionsTable', {
+            order: [[4, 'desc']], // Urutkan berdasarkan tanggal (kolom ke-4) secara descending
+            // Non-aktifkan pagination karena kita punya pagination Flask sendiri
+            paging: false,
+            info: false,
+            searching: true,
+            buttons: [
+                {
+                    text: 'Export',
+                    extend: 'collection',
+                    className: 'btn btn-secondary btn-sm',
+                    buttons: [
+                        { extend: 'copy', className: 'btn btn-light' },
+                        { extend: 'csv', className: 'btn btn-light' },
+                        { extend: 'excel', className: 'btn btn-light' },
+                        { extend: 'pdf', className: 'btn btn-light' }
+                    ]
+                }
+            ]
+        });
+    });
+</script>
+{% endblock %}

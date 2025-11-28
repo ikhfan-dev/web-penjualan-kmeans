@@ -1,0 +1,6 @@
+1. Menu Pelanggan Tambah Query Search
+2. Transaksi Tidak memotong diskon, query pelanggan 1 huruf
+3. Segmentasi menampilkan riwayat diskon
+4. Laporan analisis: tampilan data sesuai screenshot
+5. Export Excel Riwayat Trx
+6. Penamaan Segmen dalam bahasa indonesia

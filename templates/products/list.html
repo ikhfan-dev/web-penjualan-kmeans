@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Daftar Produk{% endblock %}
+
+{% block content %}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Semua Produk</h6>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group me-2">
+                    <a href="{{ url_for('products.add_product') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i> Tambah Produk
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if products %}
+        <div class="table-responsive">
+            <table class="table table-bordered" id="productsTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Nama</th>
+                        <th>Kategori</th>
+                        <th>Satuan</th>
+                        <th>Harga</th>
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ product.sku }}</td>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.category.title() if product.category else '-' }}</td>
+                        <td>{{ product.unit.upper() }}</td>
+                        <td>Rp {{ "{:,.0f}".format(product.price) }}</td>
+                        <td>
+                            {% if product.stock < 10 %}
+                            <span class="badge bg-danger">{{ product.stock }}</span>
+                            {% elif product.stock < 50 %}
+                            <span class="badge bg-warning">{{ product.stock }}</span>
+                            {% else %}
+                            <span class="badge bg-success">{{ product.stock }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <a href="{{ url_for('products.edit_product', id=product.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ product.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ product.id }}">Konfirmasi Hapus</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Apakah Anda yakin ingin menghapus produk "{{ product.name }}"?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                    <form action="{{ url_for('products.delete_product', id=product.id) }}" method="POST">
+                                        <button type="submit" class="btn btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>Belum ada produk. <a href="{{ url_for('products.add_product') }}">Tambah produk pertama</a>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#productsTable').DataTable({
+            responsive: true
+        });
+    });
+</script>
+{% endblock %}

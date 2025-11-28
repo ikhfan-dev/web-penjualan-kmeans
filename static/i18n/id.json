@@ -1,0 +1,27 @@
+{
+    "processing": "Sedang memproses...",
+    "search": "Cari:",
+    "lengthMenu": "Tampilkan _MENU_ entri",
+    "info": "Menampilkan _START_ hingga _END_ dari _TOTAL_ entri",
+    "infoEmpty": "Tidak ada data yang tersedia dalam tabel",
+    "infoFiltered": "(disaring dari _MAX_ total entri)",
+    "zeroRecords": "Tidak ada data yang cocok dengan pencarian",
+    "paginate": {
+        "first": "Pertama",
+        "last": "Terakhir",
+        "next": "Selanjutnya",
+        "previous": "Sebelumnya"
+    },
+    "aria": {
+        "sortAscending": ": aktifkan untuk mengurutkan kolom ini",
+        "sortDescending": ": aktifkan untuk mengurutkan kolom ini"
+    },
+    "buttons": {
+        "collection": "Ekspor",
+        "copy": "Salin",
+        "csv": "CSV",
+        "excel": "Excel",
+        "pdf": "PDF",
+        "print": "Cetak"
+    }
+}

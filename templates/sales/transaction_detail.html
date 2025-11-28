@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Detail Transaksi #{{ transaction.id }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+    <h1 class="h2"></h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('sales.transactions') }}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Kembali
+            </a>
+            <button type="button" class="btn btn-sm btn-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Cetak
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informasi Transaksi</h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>ID Transaksi:</strong> {{ transaction.id }}</p>
+                        <p><strong>Tanggal:</strong> {{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p><strong>Metode Pembayaran:</strong> 
+                            {% if transaction.payment_method == 'cash' %}
+                            Tunai
+                            {% elif transaction.payment_method == 'card' %}
+                            Kartu
+                            {% else %}
+                            Transfer
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Pelanggan:</strong> {{ transaction.customer.name if transaction.customer else 'Pelanggan Umum' }}</p>
+                        {% if transaction.customer %}
+                        <p><strong>Telepon:</strong> {{ transaction.customer.phone or '-' }}</p>
+                        <p><strong>Email:</strong> {{ transaction.customer.email or '-' }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if transaction.notes %}
+                <div class="mb-3">
+                    <p><strong>Catatan:</strong> {{ transaction.notes }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th>Harga</th>
+                                <th>Jumlah</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in transaction.items %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>Rp {{ "{:,.0f}".format(item.price) }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>Rp {{ "{:,.0f}".format(item.price * item.quantity) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3">Total</th>
+                                <th>Rp {{ "{:,.0f}".format(transaction.total_amount) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Ringkasan</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Jumlah Item:</span>
+                    <strong>{{ transaction.items.count() }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total Quantity:</span>
+                    <strong>{{ total_quantity }}</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span>Total Pembayaran:</span>
+                    <strong>Rp {{ "{:,.0f}".format(transaction.total_amount) }}</strong>
+                </div>
+            </div>
+        </div>
+        
+        {% if transaction.customer %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Segmen Pelanggan</h6>
+            </div>
+            <div class="card-body" id="customerSegments">
+                <p class="text-muted">Memuat informasi segmen...</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        {% if transaction.customer %}
+        // Load customer segments
+        $.ajax({
+            url: `/sales/api/customer-segments/{{ transaction.customer.id }}`,
+            method: 'GET',
+            success: function(data) {
+                let html = '';
+                
+                if (data.segments.length > 0) {
+                    data.segments.forEach(function(segment) {
+                        html += `
+                            <div class="mb-2">
+                                <span class="badge me-1" style="background-color: ${segment.color};">
+                                    ${segment.name}
+                                </span>
+                                <small class="text-muted">${segment.description}</small>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<p class="text-muted">Pelanggan belum dianalisis</p>';
+                }
+                
+                $('#customerSegments').html(html);
+            },
+            error: function() {
+                $('#customerSegments').html('<p class="text-danger">Gagal memuat informasi segmen</p>');
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

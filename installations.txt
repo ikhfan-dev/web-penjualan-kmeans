@@ -1,0 +1,9 @@
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install flask flask-sqlalchemy flask-migrate flask-login flask-wtf pymysql pandas numpy scikit-learn email_validator faker
+buat database dengan nama "penjualan_db"
+flask db init
+flask db migrate -m "Initial migration"
+flask db upgrade
+flask seed-db
+flask run

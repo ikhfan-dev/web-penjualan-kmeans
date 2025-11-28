@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Detail Segmen: {{ segment.segment_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+    <h1 class="h2"></h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Kembali
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informasi Segmen</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Nama Segmen:</strong> {{ segment.segment_name }}</p>
+                <p><strong>Deskripsi:</strong> {{ segment.description }}</p>
+                <p><strong>Jumlah Pelanggan:</strong> {{ customers|length }}</p>
+                <p><strong>Dibuat pada:</strong> {{ segment.created_at.strftime('%d/%m/%Y') }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Pelanggan dalam Segmen</h6>
+            </div>
+            <div class="card-body">
+                {% if customers %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Nama</th>
+                                <th>Telepon</th>
+                                <th>Email</th>
+                                <th>Terakhir Dianalisis</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer, membership in customers %}
+                            <tr>
+                                <td>{{ loop.index + 1 }}</td>
+                                <td>{{ customer.name }}</td>
+                                <td>{{ customer.phone or '-' }}</td>
+                                <td>{{ customer.email or '-' }}</td>
+                                <td>{{ membership.assigned_at.strftime('%d/%m/%Y') }}</td>
+                                <td class="table-actions">
+                                    <a href="{{ url_for('customers.edit_customer', id=customer.id) }}" class="btn btn-sm btn-info" title="Edit Pelanggan">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('customers.customer_transactions', customer_id=customer.id) }}" class="btn btn-sm btn-primary" title="Lihat Riwayat Transaksi">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>Tidak ada pelanggan dalam segmen ini.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Sertakan file JS yang baru kita buat -->
+<script src="{{ url_for('static', filename='js/dataTables-init.js') }}"></script>
+
+<script>
+    $(document).ready(function() {
+        // Inisialisasi DataTable untuk tabel pelanggan di segmen
+        initializeDataTable('segmentCustomersTable', {
+            pageLength: 25,
+            order: [[1, 'asc']]
+        });
+    });
+</script>
+{% endblock %}

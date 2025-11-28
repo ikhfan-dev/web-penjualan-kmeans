@@ -1,0 +1,861 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Menu Transaksi{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+     <div id="notification-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+        <!-- Notifikasi akan muncul di sini -->
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Transaksi Baru</h6>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-danger" id="clearCartBtn">
+                            <i class="fas fa-trash me-1"></i> Kosongkan
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="customerSearch" class="form-label">Pelanggan</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="customerSearch" placeholder="Cari pelanggan...">
+                                <button class="btn btn-outline-secondary" type="button" id="newCustomerBtn">
+                                    <i class="fas fa-plus"></i> Baru
+                                </button>
+                            </div>
+                            <div id="customerInfo" class="mt-2"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="productSearch" class="form-label">Produk</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="productSearch" placeholder="Cari produk...">
+                                <button class="btn btn-outline-secondary" type="button" id="addProductBtn">
+                                    <i class="fas fa-plus"></i> Tambah
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Produk</th>
+                                    <th>Harga</th>
+                                    <th>Jumlah</th>
+                                    <th>Subtotal</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartItems">
+                                <tr id="emptyCartMessage">
+                                    <td colspan="5" class="text-center">Keranjang belanja kosong</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3">Subtotal</th>
+                                    <th id="cartSubtotal">Rp 0</th>
+                                    <th></th>
+                                </tr>
+                                <tr id="discountRow" style="display: none;"> <!-- Awalnya disembunyikan -->
+                                    <th colspan="3">Diskon</th>
+                                    <th id="cartDiscount">Rp 0</th>
+                                    <th></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3">Total</th>
+                                    <th id="cartTotal">Rp 0</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label for="paymentMethod" class="form-label">Metode Pembayaran</label>
+                            <select class="form-select" id="paymentMethod">
+                                <option value="cash">Tunai</option>
+                                <option value="card">Kartu</option>
+                                <option value="transfer">Transfer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="notes" class="form-label">Catatan</label>
+                            <textarea class="form-control" id="notes" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" class="btn btn-success btn-lg" id="checkoutBtn">
+                            <i class="fas fa-check me-1"></i> Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informasi Pelanggan</h6>
+                </div>
+                <div class="card-body" id="customerDetails">
+                    <p class="text-muted">Pilih pelanggan untuk melihat informasi</p>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Promosi Berdasarkan Segmen</h6>
+                </div>
+                <div class="card-body" id="segmentPromotions">
+                    <p class="text-muted">Promosi akan muncul setelah pelanggan dipilih</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Selection Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Pilih Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Nama</th>
+                                <th>Harga</th>
+                                <th>Stok</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productList">
+                            <tr>
+                                <td colspan="5" class="text-center">Mencari produk...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Selection Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customerModalLabel">Pilih Pelanggan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Telepon</th>
+                                <th>Email</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerList">
+                            <tr>
+                                <td colspan="4" class="text-center">Mencari pelanggan...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Customer Modal -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1" aria-labelledby="newCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newCustomerModalLabel">Pelanggan Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newCustomerForm">
+                    <div class="mb-3">
+                        <label for="newCustomerName" class="form-label">Nama</label>
+                        <input type="text" class="form-control" id="newCustomerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newCustomerPhone" class="form-label">Telepon</label>
+                        <input type="text" class="form-control" id="newCustomerPhone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newCustomerEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="newCustomerEmail">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="saveNewCustomerBtn">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Checkout Success Modal -->
+<div class="modal fade" id="checkoutSuccessModal" tabindex="-1" aria-labelledby="checkoutSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="checkoutSuccessModalLabel">Transaksi Berhasil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-check-circle fa-5x text-success mb-3"></i>
+                    <h5>Transaksi berhasil diproses!</h5>
+                    <p>No. Transaksi: <span id="transactionId"></span></p>
+                    <p>Total: <span id="transactionTotal"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="newTransactionBtn">Transaksi Baru</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Global variables
+    let cart = [];
+    let selectedCustomer = null;
+    let currentPromotion = null;
+    let availablePromotion = null;
+    let productModal = null;
+    let customerModal = null;
+    let newCustomerModal = null;
+    let checkoutSuccessModal = null;
+    
+    $(document).ready(function() {
+        // Initialize modals
+        productModal = new bootstrap.Modal(document.getElementById('productModal'));
+        customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
+        newCustomerModal = new bootstrap.Modal(document.getElementById('newCustomerModal'));
+        checkoutSuccessModal = new bootstrap.Modal(document.getElementById('checkoutSuccessModal'));
+        
+        // Product search
+        $('#productSearch').on('input', function() {
+            const query = $(this).val();
+            if (query.length >= 2) {
+                searchProducts(query);
+            }
+        });
+        
+        $('#addProductBtn').click(function() {
+            const query = $('#productSearch').val();
+            if (query) {
+                searchProducts(query);
+                productModal.show();
+            }
+        });
+        
+        // Customer search
+        $('#customerSearch').on('input', function() {
+            const query = $(this).val();
+            if (query.length >= 2) {
+                searchCustomers(query);
+            }
+        });
+        
+        // New customer button
+        $('#newCustomerBtn').click(function() {
+            newCustomerModal.show();
+        });
+        
+        // Save new customer
+        $('#saveNewCustomerBtn').click(function() {
+            const name = $('#newCustomerName').val();
+            const phone = $('#newCustomerPhone').val();
+            const email = $('#newCustomerEmail').val();
+            
+            if (!name) {
+                alert('Nama pelanggan harus diisi');
+                return;
+            }
+            
+            // Create new customer via API
+            $.ajax({
+                url: '/customers/api/add',
+                method: 'POST',
+                data: {
+                    name: name,
+                    phone: phone,
+                    email: email
+                },
+                success: function(response) {
+                    if (response.success) {
+                        selectedCustomer = response.customer;
+                        updateCustomerInfo();
+                        newCustomerModal.hide();
+                        $('#newCustomerForm')[0].reset();
+                    } else {
+                        alert('Gagal menambah pelanggan: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat menambah pelanggan');
+                }
+            });
+        });
+        
+        // Clear cart button
+        $('#clearCartBtn').click(function() {
+            if (confirm('Apakah Anda yakin ingin mengosongkan keranjang?')) {
+                cart = [];
+                updateCart();
+            }
+        });
+        
+        // Checkout button
+        $('#checkoutBtn').click(function() {
+            if (cart.length === 0) {
+                alert('Keranjang belanja kosong');
+                return;
+            }
+            
+            if (!selectedCustomer) {
+                if (!confirm('Tidak ada pelanggan yang dipilih. Lanjutkan sebagai pelanggan umum?')) {
+                    return;
+                }
+                
+                // Create a generic customer
+                selectedCustomer = {
+                    id: 0,
+                    name: 'Pelanggan Umum',
+                    phone: '',
+                    email: ''
+                };
+            }
+            
+            checkout();
+        });
+        
+        // New transaction button
+        $('#newTransactionBtn').click(function() {
+            checkoutSuccessModal.hide();
+            resetTransaction();
+        });
+    });
+    
+    function searchProducts(query) {
+        $.ajax({
+            url: '/products/api/search?q=' + query,
+            method: 'GET',
+            success: function(products) {
+                let html = '';
+                
+                if (products.length === 0) {
+                    html = '<tr><td colspan="5" class="text-center">Produk tidak ditemukan</td></tr>';
+                } else {
+                    products.forEach(function(product) {
+                        html += `
+                            <tr>
+                                <td>${product.sku}</td>
+                                <td>${product.name}</td>
+                                <td>Rp ${product.price.toLocaleString('id-ID')}</td>
+                                <td>${product.stock}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="addToCart(${product.id}, '${product.name}', ${product.price}, ${product.stock})">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                $('#productList').html(html);
+            },
+            error: function() {
+                $('#productList').html('<tr><td colspan="5" class="text-center">Terjadi kesalahan</td></tr>');
+            }
+        });
+    }
+    
+    function searchCustomers(query) {
+        $.ajax({
+            url: '/customers/api/search?q=' + query,
+            method: 'GET',
+            success: function(customers) {
+                let html = '';
+                
+                if (customers.length === 0) {
+                    html = '<tr><td colspan="4" class="text-center">Pelanggan tidak ditemukan</td></tr>';
+                } else {
+                    customers.forEach(function(customer) {
+                        html += `
+                            <tr>
+                                <td>${customer.name}</td>
+                                <td>${customer.phone || '-'}</td>
+                                <td>${customer.email || '-'}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="selectCustomer(${customer.id}, '${customer.name}', '${customer.phone}', '${customer.email}')">
+                                        <i class="fas fa-check"></i> Pilih
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                $('#customerList').html(html);
+                customerModal.show();
+            },
+            error: function() {
+                $('#customerList').html('<tr><td colspan="4" class="text-center">Terjadi kesalahan</td></tr>');
+            }
+        });
+    }
+    
+    function selectCustomer(id, name, phone, email) {
+        selectedCustomer = {
+            id: id,
+            name: name,
+            phone: phone,
+            email: email
+        };
+        
+        updateCustomerInfo();
+        customerModal.hide();
+        $('#customerSearch').val(name);
+    }
+    
+    function updateCustomerInfo() {
+        if (!selectedCustomer) {
+            $('#customerInfo').html('');
+            $('#customerDetails').html('<p class="text-muted">Pilih pelanggan untuk melihat informasi</p>');
+            $('#segmentPromotions').html('<p class="text-muted">Promosi akan muncul setelah pelanggan dipilih</p>');
+            return;
+        }
+        
+        $('#customerInfo').html(`
+            <div class="alert alert-info">
+                <strong>${selectedCustomer.name}</strong>
+                ${selectedCustomer.phone ? `<br>Telepon: ${selectedCustomer.phone}` : ''}
+                ${selectedCustomer.email ? `<br>Email: ${selectedCustomer.email}` : ''}
+            </div>
+        `);
+
+        // Reset promosi saat ganti pelanggan
+        currentPromotion = null;
+        availablePromotion = null;
+        
+        // Get customer segments and promotions
+        if (selectedCustomer.id > 0) {
+            $.ajax({
+                url: `/sales/api/customer-segments/${selectedCustomer.id}`,
+                method: 'GET',
+                success: function(data) {
+                    let customerHtml = `
+                        <h6>${data.customer.name}</h6>
+                        ${data.customer.phone ? `<p>Telepon: ${data.customer.phone}</p>` : ''}
+                        ${data.customer.email ? `<p>Email: ${data.customer.email}</p>` : ''}
+                    `;
+                    
+                    let promotionsHtml = '';
+                    
+                    if (data.segments.length > 0) {
+                        customerHtml += '<h6 class="mt-3">Segmen:</h6>';
+                        
+                        data.segments.forEach(function(segment) {
+                            customerHtml += `
+                                <span class="badge me-1" style="background-color: ${segment.color};">
+                                    ${segment.name}
+                                </span>
+                            `;
+                            
+                            // Add promotions based on segment
+                            if (segment.name === 'VIP') {
+                                promotionsHtml += `
+                                    <div class="alert alert-success">
+                                        <strong>Promosi VIP:</strong> Diskon 10% untuk semua produk
+                                    </div>
+                                `;
+                            } else if (segment.name === 'Frequent Buyer') {
+                                promotionsHtml += `
+                                    <div class="alert alert-info">
+                                        <strong>Promosi Frequent Buyer:</strong> Beli 3 gratis 1 untuk produk tertentu
+                                    </div>
+                                `;
+                            } else if (segment.name === 'Occasional Shopper') {
+                                promotionsHtml += `
+                                    <div class="alert alert-warning">
+                                        <strong>Promosi Occasional Shopper:</strong> Diskon 5% untuk pembelian di atas Rp 500.000
+                                    </div>
+                                `;
+                            }
+                        });
+                    } else {
+                        customerHtml += '<p class="text-muted">Belum ada segmen</p>';
+                        promotionsHtml = `
+                            <div class="alert alert-secondary">
+                                <strong>Promosi Umum:</strong> Diskon 2% untuk semua pelanggan
+                            </div>
+                        `;
+                    }
+                    
+                    $('#customerDetails').html(customerHtml);
+
+                    if (data.promotions.length > 0) {
+                        // Ambil promosi pertama (untuk sederhananya, satu pelanggan satu promosi)
+                        availablePromotion = data.promotions[0]; 
+                    
+                        promotionsHtml = `
+                            <div class="alert alert-success d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Promosi Tersedia:</strong> ${availablePromotion.description}
+                                </div>
+                                <div id="promotionButtonContainer">
+                                    <!-- Tombol akan dirender oleh fungsi updatePromotionButtonUI() -->
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        promotionsHtml = `
+                            <div class="alert alert-secondary">
+                                <strong>Tidak ada promosi untuk segmen ini.</strong>
+                            </div>
+                        `;
+                    }
+                    
+                    $('#segmentPromotions').html(promotionsHtml);
+
+                    // Panggil fungsi untuk menggambar tombol yang benar
+                    updatePromotionButtonUI();
+                },
+                error: function() {
+                    $('#customerDetails').html('<p class="text-danger">Gagal memuat informasi pelanggan</p>');
+                    $('#segmentPromotions').html('<p class="text-danger">Gagal memuat promosi</p>');
+                }
+            });
+        } else {
+            // Generic customer
+            $('#customerDetails').html(`
+                <h6>${selectedCustomer.name}</h6>
+            `);
+            
+            $('#segmentPromotions').html(`
+                <div class="alert alert-secondary">
+                    <strong>Promosi Umum:</strong> Diskon 2% untuk semua pelanggan
+                </div>
+            `);
+        }
+    }
+
+    function addToCart(productId, productName, price, stock) {
+        // Check if product already in cart
+        const existingItem = cart.find(item => item.product_id === productId);
+        
+        if (existingItem) {
+            if (existingItem.quantity < stock) {
+                existingItem.quantity += 1;
+            } else {
+                alert('Stok tidak mencukupi');
+                return;
+            }
+        } else {
+            if (stock > 0) {
+                cart.push({
+                    product_id: productId,
+                    name: productName,
+                    price: price,
+                    quantity: 1,
+                    stock: stock
+                });
+            } else {
+                alert('Produk sedang habis');
+                return;
+            }
+        }
+        
+        updateCart();
+        productModal.hide();
+        $('#productSearch').val('');
+    }
+    
+    // Fungsi untuk menampilkan notifikasi Bootstrap
+    function showNotification(message, type = 'info') {
+        const notificationContainer = document.getElementById('notification-container');
+        
+        // Buat elemen notifikasi
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+        
+        // Tambahkan ke container
+        notificationContainer.appendChild(alertDiv);
+        
+        // Hapus notifikasi otomatis setelah 4 detik
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => {
+                notificationContainer.removeChild(alertDiv);
+            }, 150); // Tunggu animasi fade-out selesai
+        }, 4000);
+    }
+
+    function updatePromotionButtonUI() {
+        const buttonContainer = $('#promotionButtonContainer');
+        if (!buttonContainer.length) return;
+
+        if (currentPromotion) {
+            // Jika promosi sudah diterapkan, tampilkan tombol "Batal Terapkan"
+            buttonContainer.html(`
+                <button type="button" class="btn btn-sm btn-warning" onclick="cancelPromotion()">
+                    <i class="fas fa-times me-1"></i>Batal Terapkan
+                </button>
+            `);
+        } else if (availablePromotion) {
+            // Jika ada promosi tersedia tapi belum diterapkan, tampilkan tombol "Terapkan"
+            buttonContainer.html(`
+                <button type="button" class="btn btn-sm btn-success" onclick="applyPromotion()">
+                    <i class="fas fa-check me-1"></i>Terapkan
+                </button>
+            `);
+        } else {
+            // Jika tidak ada promosi, kosongkan kontainer
+            buttonContainer.html('');
+        }
+    }
+    
+    function applyPromotion() {
+         if (!availablePromotion) {
+            showNotification('Tidak ada promosi yang bisa diterapkan.', 'info');
+            return;
+        }
+        
+        currentPromotion = availablePromotion; 
+    
+        showNotification('Promosi berhasil diterapkan!', 'success');
+        
+        // Perbarui tampilan keranjang dan tombol
+        updateCart();
+        updatePromotionButtonUI();
+    }
+
+    function cancelPromotion() {
+        if (!currentPromotion) {
+            showNotification('Tidak ada promosi yang aktif untuk dibatalkan.', 'info');
+            return;
+        }
+        
+        currentPromotion = null; // Hapus promosi yang aktif
+        showNotification('Promosi berhasil dibatalkan.', 'warning');
+        updateCart(); // Perbarui tampilan keranjang (diskon akan hilang)
+        updatePromotionButtonUI(); // Perbarui tombol kembali ke "Terapkan"
+    }
+    
+    function updateCart() {
+        if (cart.length === 0) {
+            $('#cartItems').html('<tr id="emptyCartMessage"><td colspan="5" class="text-center">Keranjang belanja kosong</td></tr>');
+            $('#cartTotal').text('Rp 0');
+            $('#discountRow').hide();
+            return;
+        }
+        
+        let html = '';
+        let total = 0;
+        let subtotal = 0;
+        
+        cart.forEach(function(item, index) {
+            subtotal += item.price * item.quantity;
+            
+            html += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>Rp ${item.price.toLocaleString('id-ID')}</td>
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" value="${item.quantity}" min="1" max="${item.stock}" onchange="setQuantity(${index}, this.value)">
+                            <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td>Rp ${subtotal.toLocaleString('id-ID')}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeFromCart(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        $('#cartItems').html(html);
+
+        let discountAmount = 0;
+        let finalTotal = subtotal;
+
+        // Hitung diskon jika ada promosi
+        if (currentPromotion) {
+            if (currentPromotion.type === 'percentage_discount') {
+                // Contoh: Untuk Occasional Shopper, diskon hanya jika total > 100000
+                if (currentPromotion.value === 2.0 && subtotal <= 100000) {
+                    // Tidak ada diskon
+                } else {
+                    discountAmount = subtotal * (currentPromotion.value / 100);
+                }
+            } else if (currentPromotion.type === 'fixed_discount') {
+                discountAmount = currentPromotion.value;
+            }
+        }
+        
+        finalTotal = subtotal - discountAmount;
+
+         $('#cartTotal').text('Rp ' + finalTotal.toLocaleString('id-ID'));
+    }
+    
+    function updateQuantity(index, change) {
+        const item = cart[index];
+        const newQuantity = item.quantity + change;
+        
+        if (newQuantity > 0 && newQuantity <= item.stock) {
+            item.quantity = newQuantity;
+            updateCart();
+        } else if (newQuantity > item.stock) {
+            alert('Stok tidak mencukupi');
+        }
+    }
+    
+    function setQuantity(index, value) {
+        const item = cart[index];
+        const newQuantity = parseInt(value);
+        
+        if (newQuantity > 0 && newQuantity <= item.stock) {
+            item.quantity = newQuantity;
+            updateCart();
+        } else if (newQuantity > item.stock) {
+            alert('Stok tidak mencukupi');
+            updateCart();
+        } else {
+            alert('Jumlah harus lebih dari 0');
+            updateCart();
+        }
+    }
+    
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        updateCart();
+    }
+
+    function checkout() {
+        const paymentMethod = $('#paymentMethod').val();
+        const notes = $('#notes').val();
+        
+        // Calculate total on the frontend for display
+        let subtotal = 0;
+        cart.forEach(function(item) {
+            subtotal += item.price * item.quantity;
+        });
+        
+        let discountAmount = 0;
+        if (currentPromotion) {
+            if (currentPromotion.type === 'percentage_discount') {
+                if (currentPromotion.value === 2.0 && subtotal <= 100000) {
+                    // Tidak ada diskon
+                } else {
+                    discountAmount = subtotal * (currentPromotion.value / 100);
+                }
+            } else if (currentPromotion.type === 'fixed_discount') {
+                discountAmount = currentPromotion.value;
+            }
+        }
+        let finalTotal = subtotal - discountAmount;
+        
+        // Prepare data for API
+        const data = {
+            customer_id: selectedCustomer.id,
+            items: cart.map(function(item) {
+                return {
+                    product_id: item.product_id,
+                    quantity: item.quantity
+                };
+            }),
+            payment_method: paymentMethod,
+            notes: notes,
+            // --- KIRIM DATA PROMOSI KE BACKEND ---
+            promotion_type: currentPromotion ? currentPromotion.type : null,
+            promotion_value: currentPromotion ? currentPromotion.value : null,
+            discount_amount: discountAmount
+        };
+        
+        // Send checkout request
+        $.ajax({
+            url: '/sales/api/checkout',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                if (response.success) {
+                    $('#transactionId').text(response.transaction_id);
+                    $('#transactionTotal').text('Rp ' + response.total_amount.toLocaleString('id-ID'));
+                    checkoutSuccessModal.show();
+                    resetTransaction();
+                } else {
+                    alert('Checkout gagal: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat melakukan checkout');
+            }
+        });
+    }
+    
+    function resetTransaction() {
+        cart = [];
+        selectedCustomer = null;
+        currentPromotion = null;
+        availablePromotion = null;
+        $('#customerSearch').val('');
+        $('#productSearch').val('');
+        $('#paymentMethod').val('cash');
+        $('#notes').val('');
+        updateCart();
+        updateCustomerInfo();
+    }
+</script>
+{% endblock %}
