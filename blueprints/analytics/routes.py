@@ -81,125 +81,126 @@ def segment_detail(id):
 @login_required
 def run_kmeans():
     if request.method == 'POST':
+        # Default n_clusters diambil dari form (user bisa pilih 3, 4, atau 5)
         n_clusters = int(request.form.get('n_clusters', 3))
         
         try:
-            # --- OPTIMASI 1: HITUNG RFM DI DATABASE LEVEL ---
-            # Daripada load semua raw transaksi, kita load hasil agregasi saja.
-            # Ini menghemat RAM secara signifikan.
-            
+            # 1. Cek Data Transaksi
             latest_transaction_date = db.session.query(func.max(Transaction.created_at)).scalar()
             if not latest_transaction_date:
                 flash('Tidak ada data transaksi untuk dianalisis', 'warning')
                 return redirect(url_for('analytics.dashboard'))
             
-            # Kita set 'current_date' sedikit di depan transaksi terakhir agar recency tidak 0
-            current_date = latest_transaction_date
-            
-            # Query RFM Aggregation
             results = db.session.query(
                 Transaction.customer_id,
                 func.count(Transaction.id).label('frequency'),
                 func.sum(Transaction.total_amount).label('monetary'),
                 func.max(Transaction.created_at).label('last_purchase_date')
             ).group_by(Transaction.customer_id).all()
-
+            
             if not results:
                 flash('Data tidak cukup untuk analisis', 'warning')
                 return redirect(url_for('analytics.dashboard'))
-            
-            rfm_df = pd.DataFrame(results)
 
+            # 2. Proses Data Frame & RFM
+            rfm_df = pd.DataFrame(results)
             if not rfm_df.empty:
                 rfm_df.columns = ['customer_id', 'frequency', 'monetary', 'last_purchase_date']
-            
-            if rfm_df.empty:
-                flash('Data tidak cukup untuk analisis', 'warning')
-                return redirect(url_for('analytics.dashboard'))
 
-            # Hitung Recency (hari)
+            current_date = pd.Timestamp.now()
             rfm_df['recency'] = (current_date - pd.to_datetime(rfm_df['last_purchase_date'])).dt.days
             
-            # Siapkan data untuk clustering
-            # Kita gunakan log transform untuk Monetary jika skewness tinggi (opsional, tapi disarankan)
-            # Di sini kita pakai standard scaler saja sesuai kode asli
+            # 3. K-Means
             scaler = StandardScaler()
             rfm_scaled = scaler.fit_transform(rfm_df[['recency', 'frequency', 'monetary']])
             
-            # Apply K-Means
+            # Safety check: Jangan buat cluster lebih banyak dari jumlah data
+            if len(rfm_df) < n_clusters:
+                n_clusters = len(rfm_df)
+            
             kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
             rfm_df['cluster'] = kmeans.fit_predict(rfm_scaled)
             
-            # --- OPTIMASI 2: SORTING CLUSTER (CRITICAL LOGIC) ---
-            # Kita harus memastikan Cluster 0, 1, 2 punya urutan logika yang jelas (misal berdasarkan Monetary).
-            # Agar 'VIP' selalu jatuh ke cluster dengan spending tertinggi.
-            
-            # Hitung rata-rata monetary per cluster
+            # 4. Sorting Cluster (0 = Paling Kaya/VIP)
             cluster_summary = rfm_df.groupby('cluster')['monetary'].mean().reset_index()
-            # Urutkan dari monetary tertinggi ke terendah (VIP -> Low Value)
             cluster_summary = cluster_summary.sort_values('monetary', ascending=False).reset_index(drop=True)
             
-            # Buat mapping: Cluster ID Asli -> Cluster ID Baru yang Terurut
-            # Contoh: Cluster 2 punya duit terbanyak, dia jadi index 0 (VIP)
             cluster_map = {row['cluster']: i for i, row in cluster_summary.iterrows()}
-            
-            # Terapkan mapping ke dataframe utama
             rfm_df['cluster_sorted'] = rfm_df['cluster'].map(cluster_map)
             
-            # --- DATABASE UPDATE ---
+            # 5. Reset Membership (Tanpa menghapus Master Segmen agar ID tetap aman)
             CustomerSegmentMembership.query.delete()
-            # Note: Jangan hapus CustomerSegment dulu jika ingin mempertahankan ID, 
-            # tapi update saja isinya agar lebih rapi. 
-            # Untuk simplicity, kita ikuti logic reset tapi dengan nama yang konsisten.
             
-            segment_names = [
-                'VIP / Prioritas',    # Sebelumnya: VIP
-                'Pelanggan Setia',    # Sebelumnya: Frequent Buyer / Loyal
-                'Pelanggan Biasa',    # Sebelumnya: Occasional Shopper
-                'Berisiko Hilang',    # Sebelumnya: At Risk
-                'Pelanggan Pasif'     # Cadangan jika cluster > 4
+            # --- MODIFIKASI: AMBIL SEGMEN EKSISTING DARI DB ---
+            existing_segments = CustomerSegment.query.filter(
+                CustomerSegment.segment_name != 'Pelanggan Baru'
+            ).order_by(CustomerSegment.id).all()
+            
+            # --- UPDATE: DAFTAR NAMA DEFAULT SESUAI PERMINTAAN ---
+            # Urutan: Kaya -> Sedang -> Biasa -> Pasif (Gabungan) -> Baru
+            default_names = [
+                'VIP / Prioritas',    # Cluster 0
+                'Pelanggan Setia',    # Cluster 1
+                'Pelanggan Biasa',    # Cluster 2
+                'Pelanggan Pasif',    # Cluster 3 (Gabungan Pasif & Beresiko)
+                'Pelanggan Baru'      # Cluster 4 (Transaksi Sedikit/Baru Join)
             ]
             
-            # List warna: Hijau (Bagus), Biru (Oke), Kuning (Waspada), Merah (Bahaya)
-            segment_colors = ['#28a745', '#007bff', '#ffc107', '#dc3545', '#6c757d']
+            # Warna: Hijau, Biru, Kuning, Abu-abu (Pasif), Cyan (Baru)
+            default_colors = ['#28a745', '#007bff', '#ffc107', '#6c757d', '#17a2b8']
             
-            # Dictionary untuk menyimpan object segment agar tidak query berulang
-            segment_map_obj = {}
+            # Dictionary untuk menyimpan ID segmen 'Pelanggan Baru' jika terbentuk oleh K-Means
+            new_customer_segment_id = None
 
             for i in range(n_clusters):
-                # Ambil data berdasarkan cluster yang SUDAH DIURUTKAN
                 cluster_data = rfm_df[rfm_df['cluster_sorted'] == i]
                 
                 avg_recency = cluster_data['recency'].mean()
                 avg_frequency = cluster_data['frequency'].mean()
                 avg_monetary = cluster_data['monetary'].mean()
                 
-                # Tentukan nama
-                if i < len(segment_names):
-                    segment_name = segment_names[i]
-                    color = segment_colors[i] if i < len(segment_colors) else '#6c757d'
-                else:
-                    segment_name = f'Segmen {i+1}'
-                    color = '#6c757d'
-                
                 description = f'Rata-rata belanja Rp {avg_monetary:,.0f}, ' \
                              f'frekuensi {avg_frequency:.1f}x, ' \
                              f'terakhir transaksi {avg_recency:.0f} hari lalu.'
+
+                segment = None
                 
-                # Update atau Create Segment
-                segment = CustomerSegment.query.filter_by(segment_name=segment_name).first()
-                if not segment:
-                    segment = CustomerSegment(segment_name=segment_name, color=color)
-                    db.session.add(segment)
+                # Logic Penamaan:
+                if i < len(existing_segments):
+                    # Gunakan nama yang sudah ada di DB (misal user pernah edit manual)
+                    segment = existing_segments[i]
+                    segment.description = description
+                else:
+                    # Gunakan nama default baru
+                    if i < len(default_names):
+                        new_name = default_names[i]
+                        new_color = default_colors[i]
+                    else:
+                        new_name = f'Segmen {i+1}'
+                        new_color = '#6c757d'
+                        
+                    # Cek apakah segmen dengan nama ini sudah ada (untuk mencegah duplikat 'Pelanggan Baru')
+                    segment = CustomerSegment.query.filter_by(segment_name=new_name).first()
+                    
+                    if not segment:
+                        segment = CustomerSegment(
+                            segment_name=new_name,
+                            description=description,
+                            color=new_color
+                        )
+                        db.session.add(segment)
+                    else:
+                        segment.description = description
+                        if segment.color == '#007bff': # Update warna jika masih default
+                            segment.color = new_color
+                            
+                    db.session.flush()
                 
-                segment.description = description
-                segment.color = color
-                db.session.flush() # Agar dapat ID
-                
-                segment_map_obj[i] = segment.id
-                
-                # Bulk Insert Membership (Jauh lebih cepat daripada loop add satu per satu)
-                # Kita siapkan list of dicts
+                # Jika ini adalah segmen 'Pelanggan Baru', simpan ID-nya
+                if segment.segment_name == 'Pelanggan Baru':
+                    new_customer_segment_id = segment.id
+
+                # Bulk Insert Membership
                 memberships = []
                 for _, row in cluster_data.iterrows():
                     memberships.append({
@@ -211,38 +212,47 @@ def run_kmeans():
                     db.session.bulk_insert_mappings(CustomerSegmentMembership, memberships)
             
             # --- HANDLE PELANGGAN TANPA TRANSAKSI (ZERO TRANSACTION) ---
-            # Cari customer yang tidak ada di rfm_df
+            # Cari pelanggan yang belum pernah belanja sama sekali
             analyzed_customer_ids = rfm_df['customer_id'].tolist()
-            
             new_customers = db.session.query(Customer.id).filter(
                 ~Customer.id.in_(analyzed_customer_ids)
             ).all()
             
             if new_customers:
-                # Buat/Ambil segmen khusus 'Zero Transactions' atau gabung ke 'New/Low'
-                zero_segment_name = 'Pelanggan Baru'
+                target_segment_id = None
                 
-                zero_segment = CustomerSegment.query.filter_by(segment_name=zero_segment_name).first()
-                if not zero_segment:
-                    zero_segment = CustomerSegment(
-                        segment_name=zero_segment_name, 
-                        description="Pelanggan yang belum pernah melakukan transaksi",
-                        color="#17a2b8" # Cyan
-                    )
-                    db.session.add(zero_segment)
-                    db.session.flush()
+                # Skenario 1: K-Means sudah membuat segmen 'Pelanggan Baru' (Cluster ke-5)
+                if new_customer_segment_id:
+                    target_segment_id = new_customer_segment_id
                 
-                zero_memberships = [{'customer_id': c.id, 'segment_id': zero_segment.id} for c in new_customers]
+                # Skenario 2: K-Means belum buat (misal cuma pilih 3 cluster), kita buat manual
+                else:
+                    zero_segment_name = 'Pelanggan Baru'
+                    zero_segment = CustomerSegment.query.filter_by(segment_name=zero_segment_name).first()
+                    
+                    if not zero_segment:
+                        zero_segment = CustomerSegment(
+                            segment_name=zero_segment_name, 
+                            description="Pelanggan yang belum pernah melakukan transaksi",
+                            color="#17a2b8"
+                        )
+                        db.session.add(zero_segment)
+                        db.session.flush()
+                    
+                    target_segment_id = zero_segment.id
+                
+                # Masukkan pelanggan 0 transaksi ke segmen target
+                zero_memberships = [{'customer_id': c.id, 'segment_id': target_segment_id} for c in new_customers]
                 db.session.bulk_insert_mappings(CustomerSegmentMembership, zero_memberships)
 
             db.session.commit()
-            flash(f'Analisis K-Means selesai. {len(rfm_df)} pelanggan dianalisis.', 'success')
+            flash(f'Analisis K-Means selesai. {len(rfm_df)} pelanggan aktif dianalisis.', 'success')
             return redirect(url_for('analytics.dashboard'))
         
         except Exception as e:
             db.session.rollback()
             import traceback
-            traceback.print_exc() # Print error ke console untuk debug
+            traceback.print_exc()
             flash(f'Terjadi kesalahan: {str(e)}', 'danger')
             return redirect(url_for('analytics.dashboard'))
     
