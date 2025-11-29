@@ -1,68 +1,143 @@
-{% extends "layout.html" %}
-
-{% block page_title %}Jalankan Analisis K-Means{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block page_title %}Konfigurasi Analisis K-Means{%
+endblock %} {% block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Analisis K-Means</h6>
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white border-bottom-primary">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-sliders-h me-2"></i>Parameter Analisis
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info border-left-info shadow-sm">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-lightbulb fa-2x me-3"></i>
+            <div>
+              <strong>Apa yang akan terjadi?</strong><br />
+              Sistem akan membaca seluruh riwayat transaksi, menghitung skor RFM
+              (Recency, Frequency, Monetary) untuk setiap pelanggan, lalu
+              mengelompokkan mereka secara otomatis menggunakan algoritma
+              <em>K-Means Clustering</em>.
             </div>
-            <div class="card-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Analisis K-Means akan mengelompokkan pelanggan ke dalam segmen berdasarkan pola pembelian mereka (RFM Analysis).
-                </div>
-                
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="n_clusters" class="form-label">Jumlah Cluster (Segmen)</label>
-                        <select class="form-select" id="n_clusters" name="n_clusters">
-                            <option value="3" selected>3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <div class="form-text">Pilih jumlah segmen yang ingin dibuat. Rekomendasi: 3-5 segmen.</div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Kembali
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-play me-1"></i> Jalankan Analisis
-                        </button>
-                    </div>
-                </form>
-            </div>
+          </div>
         </div>
-        
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Tentang K-Means Clustering</h6>
+
+        <form method="POST" id="kmeansForm">
+          <div class="mb-4">
+            <label for="n_clusters" class="form-label fw-bold"
+              >Jumlah Cluster (Segmen) yang Diinginkan</label
+            >
+            <select
+              class="form-select form-select-lg"
+              id="n_clusters"
+              name="n_clusters"
+            >
+              <option value="3" selected>3 Segmen (Disarankan)</option>
+              <option value="4">4 Segmen</option>
+              <option value="5">5 Segmen (Detail)</option>
+            </select>
+            <div class="form-text text-muted mt-2">
+              <small
+                ><i class="fas fa-info-circle"></i> Semakin banyak segmen,
+                semakin spesifik pengelompokannya, namun mungkin lebih sulit
+                untuk dikelola strateginya.</small
+              >
             </div>
-            <div class="card-body">
-                <p>K-Means adalah algoritma clustering yang mengelompokkan data ke dalam K cluster berdasarkan kesamaan karakteristik.</p>
-                
-                <h6>Langkah-langkah Analisis:</h6>
-                <ol>
-                    <li>Menghitung nilai RFM (Recency, Frequency, Monetary) untuk setiap pelanggan</li>
-                    <li>Menstandarisasi data RFM</li>
-                    <li>Menerapkan algoritma K-Means untuk mengelompokkan pelanggan</li>
-                    <li>Menyimpan hasil clustering ke database</li>
-                </ol>
-                
-                <h6>Interpretasi Segmen:</h6>
-                <ul>
-                    <li><strong>VIP:</strong> Pelanggan dengan nilai monetary tinggi dan frequency tinggi</li>
-                    <li><strong>Frequent Buyer:</strong> Pelanggan dengan frequency tinggi tetapi monetary sedang</li>
-                    <li><strong>Occasional Shopper:</strong> Pelanggan dengan frequency rendah dan monetary rendah</li>
-                    <li><strong>New Customer:</strong> Pelanggan dengan recency tinggi (baru saja berbelanja)</li>
-                    <li><strong>At Risk:</strong> Pelanggan dengan recency rendah (sudah lama tidak berbelanja)</li>
-                </ul>
-            </div>
-        </div>
+          </div>
+
+          <hr />
+
+          <div class="d-flex justify-content-between align-items-center">
+            <a
+              href="{{ url_for('analytics.dashboard') }}"
+              class="btn btn-secondary"
+            >
+              <i class="fas fa-arrow-left me-1"></i> Kembali
+            </a>
+            <button
+              type="submit"
+              class="btn btn-primary btn-lg px-4"
+              id="btnSubmit"
+            >
+              <span id="btnText"
+                ><i class="fas fa-rocket me-2"></i>Mulai Analisis</span
+              >
+              <span id="btnLoading" style="display: none">
+                <span
+                  class="spinner-border spinner-border-sm me-2"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Sedang Memproses...
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-secondary">
+          Panduan Hasil Segmentasi
+        </h6>
+      </div>
+      <div class="card-body">
+        <p>
+          Sistem ini telah dilengkapi dengan fitur
+          <strong>Auto-Sorting</strong>. Setelah analisis selesai, segmen akan
+          otomatis diurutkan berdasarkan nilai belanja (Monetary), sehingga:
+        </p>
+
+        <div class="row mt-3">
+          <div class="col-md-4 mb-3">
+            <div class="border-start border-success border-4 p-2 bg-light">
+              <h6 class="fw-bold text-success">VIP / Platinum</h6>
+              <p class="small mb-0">
+                Segmen kasta tertinggi. Pelanggan yang menyumbang omzet terbesar
+                dan sering belanja.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="border-start border-primary border-4 p-2 bg-light">
+              <h6 class="fw-bold text-primary">Loyal / Gold</h6>
+              <p class="small mb-0">
+                Pelanggan setia yang rutin berbelanja dengan nilai transaksi
+                menengah.
+              </p>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="border-start border-warning border-4 p-2 bg-light">
+              <h6 class="fw-bold text-warning">Occasional / Silver</h6>
+              <p class="small mb-0">
+                Pelanggan biasa atau yang sudah lama tidak berbelanja (berisiko
+                churn).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+{% endblock %} {% block scripts %}
+<script>
+  // Script untuk menangani Loading State saat form disubmit
+  $(document).ready(function () {
+    $("#kmeansForm").on("submit", function () {
+      var btn = $("#btnSubmit");
+
+      // Disable tombol agar tidak diklik 2x
+      btn.prop("disabled", true);
+
+      // Ubah tampilan tombol menjadi loading
+      $("#btnText").hide();
+      $("#btnLoading").show();
+
+      // Form akan tetap terkirim karena kita tidak return false
+    });
+  });
+</script>
 {% endblock %}

@@ -9,7 +9,9 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True, nullable=False)
     email = db.Column(db.String(120), index=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
-    role = db.Column(db.String(20), default='cashier')  # admin, cashier
+    role = db.Column(db.String(20), default='cashier') 
+    
+    # Relasi transactions otomatis ada via backref di Transaction
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

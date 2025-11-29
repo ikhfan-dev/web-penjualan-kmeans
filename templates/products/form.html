@@ -1,116 +1,136 @@
-{% extends "layout.html" %}
-
-{% block page_title %}{{ title }}{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block page_title %}{{ title }}{% endblock %} {%
+block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            {{ form.sku.label(class="form-label") }}
-                            {{ form.sku(class="form-control") }}
-                            {% if form.sku.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.sku.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.name.label(class="form-label") }}
-                            {{ form.name(class="form-control") }}
-                            {% if form.name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.name.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            {{ form.price.label(class="form-label") }}
-                            <div class="input-group">
-                                <span class="input-group-text">Rp</span>
-                                {{ form.price(class="form-control") }}
-                            </div>
-                            {% if form.price.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.price.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.stock.label(class="form-label") }}
-                            {{ form.stock(class="form-control") }}
-                            {% if form.stock.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.stock.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.category.label(class="form-label") }}
-                        {{ form.category(class="form-select") }}
-                        {% if form.category.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.category.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div
+        class="card-header py-3 d-flex align-items-center justify-content-between bg-white"
+      >
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-box-open me-2"></i>{{ title }}
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {{ form.hidden_tag() }}
 
-                    <div class="mb-3">
-                        {{ form.unit.label(class="form-label") }}
-                        {{ form.unit(class="form-select") }}
-                        {% if form.unit.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.unit.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control", rows="3") }}
-                        {% if form.description.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.description.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('products.list_products') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Kembali
-                        </a>
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.sku.label(class="form-label fw-bold") }}
+              <span class="text-danger">*</span>
+              {% if form.sku.errors %} {{ form.sku(class="form-control
+              is-invalid", placeholder="Contoh: PRD-001") }}
+              <div class="invalid-feedback">
+                {% for error in form.sku.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.sku(class="form-control", placeholder="Contoh:
+              PRD-001") }} {% endif %}
+              <div class="form-text small">
+                Kode unik produk (bisa scan barcode).
+              </div>
             </div>
-        </div>
+
+            <div class="col-md-6">
+              {{ form.name.label(class="form-label fw-bold") }}
+              <span class="text-danger">*</span>
+              {% if form.name.errors %} {{ form.name(class="form-control
+              is-invalid", placeholder="Nama produk lengkap") }}
+              <div class="invalid-feedback">
+                {% for error in form.name.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.name(class="form-control", placeholder="Nama
+              produk lengkap") }} {% endif %}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.price.label(class="form-label fw-bold") }}
+              <span class="text-danger">*</span>
+              <div class="input-group">
+                <span class="input-group-text">Rp</span>
+                {% if form.price.errors %} {{ form.price(class="form-control
+                is-invalid", type="number", min="0", step="100") }}
+                <div class="invalid-feedback">
+                  {% for error in form.price.errors %} {{ error }} {% endfor %}
+                </div>
+                {% else %} {{ form.price(class="form-control", type="number",
+                min="0", step="100", placeholder="0") }} {% endif %}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              {{ form.stock.label(class="form-label fw-bold") }}
+              <span class="text-danger">*</span>
+              {% if form.stock.errors %} {{ form.stock(class="form-control
+              is-invalid", type="number", min="0") }}
+              <div class="invalid-feedback">
+                {% for error in form.stock.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.stock(class="form-control", type="number",
+              min="0", placeholder="0") }} {% endif %}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.category.label(class="form-label fw-bold") }} {% if
+              form.category.errors %} {{ form.category(class="form-select
+              is-invalid") }}
+              <div class="invalid-feedback">
+                {% for error in form.category.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.category(class="form-select") }} {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.unit.label(class="form-label fw-bold") }} {% if
+              form.unit.errors %} {{ form.unit(class="form-control is-invalid",
+              list="unitOptions", placeholder="Pcs, Kg, Box...") }}
+              <div class="invalid-feedback">
+                {% for error in form.unit.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.unit(class="form-control", list="unitOptions",
+              placeholder="Pcs, Kg, Box...") }} {% endif %}
+
+              <datalist id="unitOptions">
+                <option value="PCS"></option>
+                <option value="KG"></option>
+                <option value="Box"></option>
+                <option value="Pack"></option>
+                <option value="Liter"></option>
+                <option value="Botol"></option>
+                <option value="Sachet"></option>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            {{ form.description.label(class="form-label fw-bold") }} {% if
+            form.description.errors %} {{ form.description(class="form-control
+            is-invalid", rows="3") }}
+            <div class="invalid-feedback">
+              {% for error in form.description.errors %} {{ error }} {% endfor
+              %}
+            </div>
+            {% else %} {{ form.description(class="form-control", rows="3") }} {%
+            endif %}
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <a
+              href="{{ url_for('products.list_products') }}"
+              class="btn btn-secondary"
+            >
+              <i class="fas fa-arrow-left me-1"></i> Batal
+            </a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="fas fa-save me-1"></i> Simpan Produk
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

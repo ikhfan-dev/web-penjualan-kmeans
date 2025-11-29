@@ -1,95 +1,180 @@
-{% extends "layout.html" %}
-
-{% block page_title %}Daftar Promosi{% endblock %}
-
+{% extends "layout.html" %} {% block page_title %}Daftar Promosi{% endblock %}
 {% block content %}
 
 <div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Promosi Aktif</h6>
-            <div class="btn-toolbar mb-2 mb-md-0">
-                <div class="btn-group me-2">
-                    <a href="{{ url_for('promotions.add_promotion') }}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus me-1"></i> Tambah Promosi
-                    </a>
-                </div>
-            </div>
-        </div>
+  <div class="card-header py-3 bg-white">
+    <div
+      class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center"
+    >
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="fas fa-tags me-2"></i>Promosi Aktif
+      </h6>
+      <div class="btn-toolbar mb-2 mb-md-0">
+        <a
+          href="{{ url_for('promotions.add_promotion') }}"
+          class="btn btn-sm btn-primary"
+        >
+          <i class="fas fa-plus me-1"></i> Tambah Promosi
+        </a>
+      </div>
     </div>
-    <div class="card-body">
-        {% if promotions %}
-        <div class="table-responsive">
-            <table class="table table-bordered" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Segmen</th>
-                        <th>Jenis Promosi</th>
-                        <th>Nilai</th>
-                        <th>Deskripsi</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for promotion, segment in promotions %}
-                    <tr>
-                        <td>
-                            <span class="badge" style="background-color: {{ segment.color }};">
-                                {{ segment.segment_name }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if promotion.promotion_type == 'percentage_discount' %}
-                                <span class="badge bg-info">Diskon %</span>
-                            {% else %}
-                                <span class="badge bg-warning">Diskon Tetap</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if promotion.promotion_type == 'percentage_discount' %}
-                                {{ promotion.promotion_value }}%
-                            {% else %}
-                                Rp {{ "{:,.0f}".format(promotion.promotion_value) }}
-                            {% endif %}
-                        </td>
-                        <td>{{ promotion.description }}</td>
-                        <td class="table-actions">
-                            <a href="{{ url_for('promotions.edit_promotion', id=promotion.id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ promotion.id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    
-                    <!-- Delete Modal -->
-                    <div class="modal fade" id="deleteModal{{ promotion.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ promotion.id }}" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="deleteModalLabel{{ promotion.id }}">Konfirmasi Hapus</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    Apakah Anda yakin ingin menghapus promosi untuk segmen "{{ segment.segment_name }}"?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                    <form action="{{ url_for('promotions.delete_promotion', id=promotion.id) }}" method="POST">
-                                        <button type="submit" class="btn btn-danger">Hapus</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p>Belum ada promosi. <a href="{{ url_for('promotions.add_promotion') }}">Tambah promosi pertama</a>.</p>
-        {% endif %}
+  </div>
+  <div class="card-body">
+    {% if promotions %}
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-hover align-middle"
+        width="100%"
+        cellspacing="0"
+      >
+        <thead class="table-light">
+          <tr>
+            <th width="5%" class="text-center">No</th>
+            <th>Target Segmen</th>
+            <th>Jenis Promosi</th>
+            <th class="text-end">Nilai Promo</th>
+            <th>Deskripsi</th>
+            <th class="text-center" width="15%">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for promotion in promotions %}
+          <tr>
+            <td class="text-center">{{ loop.index }}</td>
+            <td>
+              {% if promotion.segment %}
+              <span
+                class="badge rounded-pill"
+                style="background-color: {{ promotion.segment.color }};"
+              >
+                {{ promotion.segment.segment_name }}
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">Segmen Terhapus</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if promotion.promotion_type == 'percentage_discount' %}
+              <span class="badge bg-info text-dark">
+                <i class="fas fa-percent me-1"></i> Potongan Persen
+              </span>
+              {% else %}
+              <span class="badge bg-warning text-dark">
+                <i class="fas fa-money-bill me-1"></i> Potongan Harga
+              </span>
+              {% endif %}
+            </td>
+            <td class="text-end fw-bold">
+              {% if promotion.promotion_type == 'percentage_discount' %}
+              <span class="text-danger"
+                >{{ promotion.promotion_value | int }}%</span
+              >
+              {% else %}
+              <span class="text-success"
+                >{{ promotion.promotion_value | rp }}</span
+              >
+              {% endif %}
+            </td>
+            <td>
+              <small class="text-muted"
+                >{{ promotion.description or '-' }}</small
+              >
+            </td>
+            <td class="text-center table-actions">
+              <div class="btn-group" role="group">
+                <a
+                  href="{{ url_for('promotions.edit_promotion', id=promotion.id) }}"
+                  class="btn btn-sm btn-warning text-white"
+                  title="Edit"
+                >
+                  <i class="fas fa-edit"></i>
+                </a>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
+                  data-id="{{ promotion.id }}"
+                  data-segment="{{ promotion.segment.segment_name if promotion.segment else 'Unknown' }}"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-tag fa-3x text-gray-300 mb-3"></i>
+      <p>Belum ada promosi yang dibuat.</p>
+      <a
+        href="{{ url_for('promotions.add_promotion') }}"
+        class="btn btn-primary btn-sm"
+        >Buat Promosi Pertama</a
+      >
+    </div>
+    {% endif %}
+  </div>
 </div>
+
+<div
+  class="modal fade"
+  id="deleteModal"
+  tabindex="-1"
+  aria-labelledby="deleteModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deleteModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Hapus
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Apakah Anda yakin ingin menghapus promosi untuk segmen
+          <strong id="segmentName"></strong>?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Batal
+        </button>
+        <form id="deleteForm" method="POST" action="">
+          <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block scripts %}
+<script>
+  var deleteModal = document.getElementById("deleteModal");
+  deleteModal.addEventListener("show.bs.modal", function (event) {
+    var button = event.relatedTarget;
+    var id = button.getAttribute("data-id");
+    var segmentName = button.getAttribute("data-segment");
+
+    var modalTitle = deleteModal.querySelector(".modal-title");
+    var namePlaceholder = deleteModal.querySelector("#segmentName");
+    var deleteForm = deleteModal.querySelector("#deleteForm");
+
+    namePlaceholder.textContent = segmentName;
+
+    // Update Action URL
+    var baseUrl = "{{ url_for('promotions.delete_promotion', id=0) }}";
+    deleteForm.action = baseUrl.replace("/0", "/" + id);
+  });
+</script>
 {% endblock %}

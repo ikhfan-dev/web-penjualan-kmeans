@@ -1,52 +1,170 @@
-{% extends "layout.html" %}
+{% extends "layout.html" %} {% block page_title %}Master Segmen{% endblock %} {%
+block content %}
 
-{% block page_title %}Daftar Segmen{% endblock %}
-
-{% block content %}
 <div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Daftar Segmen Pelanggan</h6>
+  <div
+    class="card-header py-3 bg-white d-flex justify-content-between align-items-center"
+  >
+    <h6 class="m-0 font-weight-bold text-primary">
+      <i class="fas fa-layer-group me-2"></i>Daftar Segmen Pelanggan
+    </h6>
+    <a
+      href="{{ url_for('analytics.run_kmeans') }}"
+      class="btn btn-sm btn-primary shadow-sm"
+    >
+      <i class="fas fa-sync-alt me-1"></i> Generate Ulang (AI)
+    </a>
+  </div>
+  <div class="card-body">
+    {% if segments %}
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-hover align-middle"
+        width="100%"
+        cellspacing="0"
+      >
+        <thead class="table-light">
+          <tr>
+            <th width="5%" class="text-center">No</th>
+            <th width="20%">Nama Segmen</th>
+            <th>Kriteria / Deskripsi</th>
+            <th width="15%" class="text-center">Warna Label</th>
+            <th width="15%" class="text-center">Total Member</th>
+            <th width="10%" class="text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for segment in segments %}
+          <tr>
+            <td class="text-center">{{ loop.index }}</td>
+            <td class="fw-bold text-primary">{{ segment.segment_name }}</td>
+            <td>
+              <small class="text-muted"
+                >{{ segment.description | default('-') }}</small
+              >
+            </td>
+            <td class="text-center">
+              <div
+                class="d-flex align-items-center justify-content-center gap-2"
+              >
+                <div
+                  class="rounded border shadow-sm"
+                  style="width: 25px; height: 25px; background-color: {{ segment.color }};"
+                ></div>
+                <span class="font-monospace small">{{ segment.color }}</span>
+              </div>
+            </td>
+            <td class="text-center">
+              <a
+                href="{{ url_for('analytics.segment_detail', id=segment.id) }}"
+                class="btn btn-sm btn-light border position-relative"
+                title="Lihat Pelanggan"
+              >
+                {{ segment.memberships.count() }} Orang
+                <i
+                  class="fas fa-external-link-alt ms-1 text-muted"
+                  style="font-size: 0.7em"
+                ></i>
+              </a>
+            </td>
+            <td class="text-center table-actions">
+              <div class="btn-group" role="group">
+                <a
+                  href="{{ url_for('segments.edit_segment', id=segment.id) }}"
+                  class="btn btn-sm btn-warning text-white"
+                  title="Edit"
+                >
+                  <i class="fas fa-edit"></i>
+                </a>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
+                  data-id="{{ segment.id }}"
+                  data-name="{{ segment.segment_name }}"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body">
-        {% if segments %}
-        <div class="table-responsive">
-            <table class="table table-bordered" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Deskripsi</th>
-                        <th>Warna</th>
-                        <th>Jumlah Pelanggan</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for segment in segments %}
-                    <tr>
-                        <td>{{ segment.segment_name }}</td>
-                        <td>{{ segment.description | default('Tidak ada deskripsi') }}</td>
-                        <td>
-                            <span class="badge me-1" style="background-color: {{ segment.color }};">
-                                {{ segment.color }}
-                            </span>
-                            <span class="badge rounded-circle" style="background-color: {{ segment.color }}; width: 20px; height: 20px;"></span>
-                        </td>
-                        <td>
-                            <span class="badge bg-primary rounded-pill">{{ segment.memberships.count() }}</span>
-                        </td>
-                        <td class="table-actions">
-                            <a href="{{ url_for('segments.edit_segment', id=segment.id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p>Belum ada segmen. <a href="{{ url_for('segments.add_segment') }}">Tambah segmen pertama</a>.</p>
-        {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-layer-group fa-3x text-gray-300 mb-3"></i>
+      <p class="text-muted">Belum ada segmen terbentuk.</p>
+      <a href="{{ url_for('analytics.run_kmeans') }}" class="btn btn-primary">
+        <i class="fas fa-play me-2"></i> Jalankan Analisis AI Sekarang
+      </a>
     </div>
+    {% endif %}
+  </div>
 </div>
+
+<div
+  class="modal fade"
+  id="deleteModal"
+  tabindex="-1"
+  aria-labelledby="deleteModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deleteModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Hapus Segmen
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Apakah Anda yakin ingin menghapus segmen
+          <strong id="segmentName"></strong>?
+        </p>
+        <div class="alert alert-warning small mb-0">
+          <i class="fas fa-info-circle me-1"></i>
+          Jika segmen ini memiliki pelanggan, penghapusan akan ditolak demi
+          keamanan data. Silakan jalankan ulang K-Means untuk mereset struktur
+          segmen.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Batal
+        </button>
+        <form id="deleteForm" method="POST" action="">
+          <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block scripts %}
+<script>
+  var deleteModal = document.getElementById("deleteModal");
+  deleteModal.addEventListener("show.bs.modal", function (event) {
+    var button = event.relatedTarget;
+    var id = button.getAttribute("data-id");
+    var name = button.getAttribute("data-name");
+
+    var namePlaceholder = deleteModal.querySelector("#segmentName");
+    var deleteForm = deleteModal.querySelector("#deleteForm");
+
+    namePlaceholder.textContent = name;
+
+    // Update Action URL
+    var baseUrl = "{{ url_for('segments.delete_segment', id=0) }}";
+    deleteForm.action = baseUrl.replace("/0", "/" + id);
+  });
+</script>
 {% endblock %}

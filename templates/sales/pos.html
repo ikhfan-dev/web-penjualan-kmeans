@@ -1,861 +1,910 @@
-{% extends "layout.html" %}
+{% extends "layout.html" %} {% block page_title %}Kasir (Point of Sales){%
+endblock %} {% block content %}
+<div class="container-fluid px-0">
+  <div
+    class="position-fixed top-0 end-0 p-3"
+    style="z-index: 1050"
+    id="toastContainer"
+  ></div>
 
-{% block page_title %}Menu Transaksi{% endblock %}
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex justify-content-between align-items-center bg-white"
+        >
+          <h6 class="m-0 fw-bold text-primary">
+            <i class="fas fa-shopping-cart me-2"></i>Keranjang Belanja
+          </h6>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            id="clearCartBtn"
+          >
+            <i class="fas fa-trash-alt me-1"></i> Reset
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3 g-2">
+            <div class="col-md-9">
+              <div class="input-group">
+                <span class="input-group-text bg-light"
+                  ><i class="fas fa-barcode"></i
+                ></span>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="productSearchInput"
+                  placeholder="Scan Barcode atau Cari Nama Produk..."
+                  autocomplete="off"
+                />
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  id="btnSearchProduct"
+                >
+                  Cari
+                </button>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <button
+                class="btn btn-outline-secondary w-100"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#productModal"
+              >
+                <i class="fas fa-list me-1"></i> Katalog
+              </button>
+            </div>
+          </div>
 
-{% block content %}
-<div class="container-fluid">
-     <div id="notification-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-        <!-- Notifikasi akan muncul di sini -->
-    </div>
+          <div class="table-responsive" style="min-height: 300px">
+            <table class="table table-bordered table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th width="40%">Produk</th>
+                  <th width="20%">Harga</th>
+                  <th width="20%">Qty</th>
+                  <th width="15%" class="text-end">Subtotal</th>
+                  <th width="5%"></th>
+                </tr>
+              </thead>
+              <tbody id="cartItems">
+                <tr id="emptyCartMessage">
+                  <td colspan="5" class="text-center py-5 text-muted">
+                    <i class="fas fa-basket-shopping fa-3x mb-3"></i>
+                    <p>Keranjang masih kosong.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Transaksi Baru</h6>
-                    <div>
-                        <button type="button" class="btn btn-sm btn-danger" id="clearCartBtn">
-                            <i class="fas fa-trash me-1"></i> Kosongkan
-                        </button>
-                    </div>
-                </div>
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Metode Pembayaran</label>
+              <select class="form-select mb-3" id="paymentMethod">
+                <option value="cash" selected>Tunai (Cash)</option>
+                <option value="card">Kartu Debit/Kredit</option>
+                <option value="qris">QRIS</option>
+                <option value="transfer">Transfer Bank</option>
+              </select>
+
+              <label class="form-label fw-bold">Catatan / Referensi</label>
+              <textarea
+                class="form-control"
+                id="notes"
+                rows="2"
+                placeholder="Catatan opsional..."
+              ></textarea>
+            </div>
+            <div class="col-md-6">
+              <div class="card bg-light border-0">
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="customerSearch" class="form-label">Pelanggan</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="customerSearch" placeholder="Cari pelanggan...">
-                                <button class="btn btn-outline-secondary" type="button" id="newCustomerBtn">
-                                    <i class="fas fa-plus"></i> Baru
-                                </button>
-                            </div>
-                            <div id="customerInfo" class="mt-2"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="productSearch" class="form-label">Produk</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="productSearch" placeholder="Cari produk...">
-                                <button class="btn btn-outline-secondary" type="button" id="addProductBtn">
-                                    <i class="fas fa-plus"></i> Tambah
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Produk</th>
-                                    <th>Harga</th>
-                                    <th>Jumlah</th>
-                                    <th>Subtotal</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="cartItems">
-                                <tr id="emptyCartMessage">
-                                    <td colspan="5" class="text-center">Keranjang belanja kosong</td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="3">Subtotal</th>
-                                    <th id="cartSubtotal">Rp 0</th>
-                                    <th></th>
-                                </tr>
-                                <tr id="discountRow" style="display: none;"> <!-- Awalnya disembunyikan -->
-                                    <th colspan="3">Diskon</th>
-                                    <th id="cartDiscount">Rp 0</th>
-                                    <th></th>
-                                </tr>
-                                <tr>
-                                    <th colspan="3">Total</th>
-                                    <th id="cartTotal">Rp 0</th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <label for="paymentMethod" class="form-label">Metode Pembayaran</label>
-                            <select class="form-select" id="paymentMethod">
-                                <option value="cash">Tunai</option>
-                                <option value="card">Kartu</option>
-                                <option value="transfer">Transfer</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="notes" class="form-label">Catatan</label>
-                            <textarea class="form-control" id="notes" rows="1"></textarea>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="btn btn-success btn-lg" id="checkoutBtn">
-                            <i class="fas fa-check me-1"></i> Checkout
-                        </button>
-                    </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal</span>
+                    <span class="fw-bold" id="cartSubtotal">Rp 0</span>
+                  </div>
+                  <div
+                    class="d-flex justify-content-between mb-2 text-success"
+                    id="discountRow"
+                    style="display: none"
+                  >
+                    <span>Diskon <small id="discountLabel"></small></span>
+                    <span class="fw-bold" id="cartDiscount">- Rp 0</span>
+                  </div>
+                  <hr />
+                  <div class="d-flex justify-content-between mb-3">
+                    <span class="h5 mb-0">Total Bayar</span>
+                    <span class="h4 mb-0 fw-bold text-primary" id="cartTotal"
+                      >Rp 0</span
+                    >
+                  </div>
+                  <div class="d-grid">
+                    <button
+                      type="button"
+                      class="btn btn-success btn-lg"
+                      id="checkoutBtn"
+                    >
+                      <i class="fas fa-check-circle me-2"></i> PROSES PEMBAYARAN
+                    </button>
+                  </div>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
-        
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Informasi Pelanggan</h6>
-                </div>
-                <div class="card-body" id="customerDetails">
-                    <p class="text-muted">Pilih pelanggan untuk melihat informasi</p>
-                </div>
-            </div>
-            
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Promosi Berdasarkan Segmen</h6>
-                </div>
-                <div class="card-body" id="segmentPromotions">
-                    <p class="text-muted">Promosi akan muncul setelah pelanggan dipilih</p>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-white">
+          <h6 class="m-0 fw-bold text-primary">
+            <i class="fas fa-user me-2"></i>Data Pelanggan
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              class="form-control"
+              id="customerSearchInput"
+              placeholder="Cari Pelanggan..."
+              readonly
+              style="background-color: white"
+            />
+            <button
+              class="btn btn-primary"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#customerModal"
+            >
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+
+          <div id="customerInfoPanel" style="display: none">
+            <div class="d-flex align-items-center mb-3">
+              <div
+                class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                style="width: 40px; height: 40px"
+              >
+                <i class="fas fa-user"></i>
+              </div>
+              <div>
+                <h6 class="mb-0 fw-bold" id="custNameDisplay"></h6>
+                <small class="text-muted" id="custPhoneDisplay"></small>
+              </div>
+              <button
+                class="btn btn-sm btn-link text-danger ms-auto"
+                onclick="resetCustomer()"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div id="segmentBadges" class="mb-3"></div>
+          </div>
+
+          <div
+            id="guestInfoPanel"
+            class="text-center py-3 text-muted border rounded bg-light"
+          >
+            <small>Pelanggan Umum (Non-Member)</small><br />
+            <a
+              href="#"
+              data-bs-toggle="modal"
+              data-bs-target="#newCustomerModal"
+              class="text-decoration-none small fw-bold"
+            >
+              <i class="fas fa-plus-circle"></i> Daftar Baru
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow mb-4 border-left-warning">
+        <div class="card-header py-3 bg-white">
+          <h6 class="m-0 fw-bold text-warning">
+            <i class="fas fa-percentage me-2"></i>Status Promosi
+          </h6>
+        </div>
+        <div class="card-body" id="promoContainer">
+          <div class="text-center text-muted small py-2">
+            Pilih pelanggan untuk melihat promo yang tersedia.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Product Selection Modal -->
-<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="productModalLabel">Pilih Produk</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>SKU</th>
-                                <th>Nama</th>
-                                <th>Harga</th>
-                                <th>Stok</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productList">
-                            <tr>
-                                <td colspan="5" class="text-center">Mencari produk...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            </div>
+<div class="modal fade" id="productModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Katalog Produk</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="modalProductSearch"
+            placeholder="Ketik nama produk..."
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            onclick="searchProductsModal()"
+          >
+            Cari
+          </button>
         </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Nama Produk</th>
+                <th>Stok</th>
+                <th class="text-end">Harga</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="productListModal"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Customer Selection Modal -->
-<div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="customerModalLabel">Pilih Pelanggan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Nama</th>
-                                <th>Telepon</th>
-                                <th>Email</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerList">
-                            <tr>
-                                <td colspan="4" class="text-center">Mencari pelanggan...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            </div>
+<div class="modal fade" id="customerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Pilih Pelanggan</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="modalCustomerSearch"
+            placeholder="Nama / No Telp..."
+          />
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            onclick="searchCustomersModal()"
+          >
+            Cari
+          </button>
         </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Nama</th>
+                <th>Telepon</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="customerListModal"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- New Customer Modal -->
-<div class="modal fade" id="newCustomerModal" tabindex="-1" aria-labelledby="newCustomerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newCustomerModalLabel">Pelanggan Baru</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="newCustomerForm">
-                    <div class="mb-3">
-                        <label for="newCustomerName" class="form-label">Nama</label>
-                        <input type="text" class="form-control" id="newCustomerName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="newCustomerPhone" class="form-label">Telepon</label>
-                        <input type="text" class="form-control" id="newCustomerPhone">
-                    </div>
-                    <div class="mb-3">
-                        <label for="newCustomerEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="newCustomerEmail">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="saveNewCustomerBtn">Simpan</button>
-            </div>
-        </div>
+<div class="modal fade" id="newCustomerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tambah Pelanggan Baru</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="formNewCustomer">
+          <div class="mb-3">
+            <label class="form-label"
+              >Nama Lengkap <span class="text-danger">*</span></label
+            >
+            <input type="text" class="form-control" id="newCustName" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label"
+              >No. Telepon <span class="text-danger">*</span></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="newCustPhone"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="newCustEmail" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="saveNewCustomer()"
+        >
+          Simpan & Pilih
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Checkout Success Modal -->
-<div class="modal fade" id="checkoutSuccessModal" tabindex="-1" aria-labelledby="checkoutSuccessModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="checkoutSuccessModalLabel">Transaksi Berhasil</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center">
-                    <i class="fas fa-check-circle fa-5x text-success mb-3"></i>
-                    <h5>Transaksi berhasil diproses!</h5>
-                    <p>No. Transaksi: <span id="transactionId"></span></p>
-                    <p>Total: <span id="transactionTotal"></span></p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="newTransactionBtn">Transaksi Baru</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            </div>
+<div
+  class="modal fade"
+  id="successModal"
+  tabindex="-1"
+  data-bs-backdrop="static"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4">
+      <div class="mb-3">
+        <div
+          class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center"
+          style="width: 80px; height: 80px"
+        >
+          <i class="fas fa-check fa-3x text-white"></i>
         </div>
-    </div>
-</div>
-{% endblock %}
+      </div>
+      <h4 class="fw-bold mb-2">Transaksi Berhasil!</h4>
+      <p class="text-muted mb-4">Data telah tersimpan di sistem.</p>
 
-{% block scripts %}
+      <div class="bg-light p-3 rounded mb-4 text-start">
+        <div class="d-flex justify-content-between mb-1">
+          <span>ID Transaksi:</span>
+          <span class="fw-bold font-monospace" id="successTransId">#000</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span>Total Bayar:</span>
+          <span class="fw-bold text-success" id="successTotal">Rp 0</span>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="resetTransaction(true)"
+        >
+          Transaksi Baru
+        </button>
+        <a
+          href="{{ url_for('sales.transactions') }}"
+          class="btn btn-outline-secondary"
+          >Lihat Riwayat</a
+        >
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block scripts %}
 <script>
-    // Global variables
-    let cart = [];
-    let selectedCustomer = null;
-    let currentPromotion = null;
-    let availablePromotion = null;
-    let productModal = null;
-    let customerModal = null;
-    let newCustomerModal = null;
-    let checkoutSuccessModal = null;
-    
-    $(document).ready(function() {
-        // Initialize modals
-        productModal = new bootstrap.Modal(document.getElementById('productModal'));
-        customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
-        newCustomerModal = new bootstrap.Modal(document.getElementById('newCustomerModal'));
-        checkoutSuccessModal = new bootstrap.Modal(document.getElementById('checkoutSuccessModal'));
-        
-        // Product search
-        $('#productSearch').on('input', function() {
-            const query = $(this).val();
-            if (query.length >= 2) {
-                searchProducts(query);
-            }
-        });
-        
-        $('#addProductBtn').click(function() {
-            const query = $('#productSearch').val();
-            if (query) {
-                searchProducts(query);
-                productModal.show();
-            }
-        });
-        
-        // Customer search
-        $('#customerSearch').on('input', function() {
-            const query = $(this).val();
-            if (query.length >= 2) {
-                searchCustomers(query);
-            }
-        });
-        
-        // New customer button
-        $('#newCustomerBtn').click(function() {
-            newCustomerModal.show();
-        });
-        
-        // Save new customer
-        $('#saveNewCustomerBtn').click(function() {
-            const name = $('#newCustomerName').val();
-            const phone = $('#newCustomerPhone').val();
-            const email = $('#newCustomerEmail').val();
-            
-            if (!name) {
-                alert('Nama pelanggan harus diisi');
-                return;
-            }
-            
-            // Create new customer via API
-            $.ajax({
-                url: '/customers/api/add',
-                method: 'POST',
-                data: {
-                    name: name,
-                    phone: phone,
-                    email: email
-                },
-                success: function(response) {
-                    if (response.success) {
-                        selectedCustomer = response.customer;
-                        updateCustomerInfo();
-                        newCustomerModal.hide();
-                        $('#newCustomerForm')[0].reset();
-                    } else {
-                        alert('Gagal menambah pelanggan: ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert('Terjadi kesalahan saat menambah pelanggan');
-                }
-            });
-        });
-        
-        // Clear cart button
-        $('#clearCartBtn').click(function() {
-            if (confirm('Apakah Anda yakin ingin mengosongkan keranjang?')) {
-                cart = [];
-                updateCart();
-            }
-        });
-        
-        // Checkout button
-        $('#checkoutBtn').click(function() {
-            if (cart.length === 0) {
-                alert('Keranjang belanja kosong');
-                return;
-            }
-            
-            if (!selectedCustomer) {
-                if (!confirm('Tidak ada pelanggan yang dipilih. Lanjutkan sebagai pelanggan umum?')) {
-                    return;
-                }
-                
-                // Create a generic customer
-                selectedCustomer = {
-                    id: 0,
-                    name: 'Pelanggan Umum',
-                    phone: '',
-                    email: ''
-                };
-            }
-            
-            checkout();
-        });
-        
-        // New transaction button
-        $('#newTransactionBtn').click(function() {
-            checkoutSuccessModal.hide();
-            resetTransaction();
-        });
+  // --- GLOBAL VARIABLES ---
+  let cart = [];
+  let selectedCustomer = null;
+  let availablePromo = null;
+  let activePromo = null;
+
+  // Formatter Rupiah
+  const rupiah = new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  });
+
+  // --- DOCUMENT READY (Event Listeners) ---
+  $(document).ready(function () {
+    // Fokus ke input scan produk saat load
+    $("#productSearchInput").focus();
+
+    // 1. Event: Scan Produk Utama (Enter Key)
+    $("#productSearchInput").on("keypress", function (e) {
+      if (e.which == 13) {
+        const query = $(this).val();
+        if (query) searchProductDirect(query);
+      }
     });
-    
-    function searchProducts(query) {
-        $.ajax({
-            url: '/products/api/search?q=' + query,
-            method: 'GET',
-            success: function(products) {
-                let html = '';
-                
-                if (products.length === 0) {
-                    html = '<tr><td colspan="5" class="text-center">Produk tidak ditemukan</td></tr>';
-                } else {
-                    products.forEach(function(product) {
-                        html += `
+
+    // 2. Event: Tombol Cari Produk Utama
+    $("#btnSearchProduct").click(function () {
+      const query = $("#productSearchInput").val();
+      if (query) searchProductDirect(query);
+    });
+
+    // 3. Event: Live Search di Modal Produk (Saat mengetik)
+    $("#modalProductSearch").on("input", function () {
+      const query = $(this).val();
+      if (query.length >= 3) searchProductsModal(); // Cari setelah 3 huruf
+    });
+
+    // 4. Event: Live Search di Modal Pelanggan (Saat mengetik)
+    $("#modalCustomerSearch").on("input", function () {
+      const query = $(this).val();
+      // Cari otomatis jika mengetik lebih dari 2 huruf, atau tekan Enter
+      if (query.length >= 2) searchCustomersModal();
+    });
+
+    // 5. Event: Checkout & Clear
+    $("#checkoutBtn").click(checkout);
+    $("#clearCartBtn").click(function () {
+      if (confirm("Kosongkan keranjang?")) {
+        cart = [];
+        renderCart();
+      }
+    });
+  });
+
+  // ==========================================
+  // FUNGSI-FUNGSI LOGIKA (Ditaruh di Global Scope)
+  // ==========================================
+
+  // --- PRODUCT FUNCTIONS ---
+
+  function searchProductDirect(query) {
+    $.ajax({
+      url: `/products/api/search?q=${query}`,
+      method: "GET",
+      success: function (data) {
+        if (data.length === 1) {
+          addToCart(data[0]);
+          $("#productSearchInput").val("");
+          showToast(`Produk "${data[0].name}" ditambahkan`, "success");
+        } else if (data.length > 1) {
+          $("#modalProductSearch").val(query);
+          searchProductsModal();
+          var myModal = new bootstrap.Modal(
+            document.getElementById("productModal")
+          );
+          myModal.show();
+        } else {
+          showToast("Produk tidak ditemukan", "danger");
+        }
+      },
+    });
+  }
+
+  function searchProductsModal() {
+    const query = $("#modalProductSearch").val();
+    $.ajax({
+      url: `/products/api/search?q=${query}`,
+      method: "GET",
+      success: function (data) {
+        let html = "";
+        if (data.length === 0) {
+          html =
+            '<tr><td colspan="4" class="text-center text-muted">Produk tidak ditemukan</td></tr>';
+        } else {
+          data.forEach((p) => {
+            // Escape string object untuk parameter onclick
+            const productJson = JSON.stringify(p).replace(/"/g, "&quot;");
+            html += `
                             <tr>
-                                <td>${product.sku}</td>
-                                <td>${product.name}</td>
-                                <td>Rp ${product.price.toLocaleString('id-ID')}</td>
-                                <td>${product.stock}</td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="addToCart(${product.id}, '${product.name}', ${product.price}, ${product.stock})">
+                                    <div class="fw-bold">${p.name}</div>
+                                    <small class="text-muted">${p.sku}</small>
+                                </td>
+                                <td>${p.stock}</td>
+                                <td class="text-end fw-bold text-success">${rupiah.format(
+                                  p.price
+                                )}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-primary" onclick="addToCartModal(${productJson})">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </td>
                             </tr>
                         `;
-                    });
-                }
-                
-                $('#productList').html(html);
-            },
-            error: function() {
-                $('#productList').html('<tr><td colspan="5" class="text-center">Terjadi kesalahan</td></tr>');
-            }
-        });
+          });
+        }
+        $("#productListModal").html(html);
+      },
+    });
+  }
+
+  function addToCartModal(product) {
+    addToCart(product);
+    // Tutup modal secara manual via Bootstrap Instance
+    const modalEl = document.getElementById("productModal");
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+
+    showToast(`Produk ditambahkan`, "success");
+  }
+
+  function addToCart(product) {
+    let existing = cart.find((item) => item.id === product.id);
+
+    if (existing) {
+      if (existing.qty + 1 > product.stock) {
+        showToast(`Stok tidak cukup! Sisa: ${product.stock}`, "warning");
+        return;
+      }
+      existing.qty++;
+    } else {
+      if (product.stock <= 0) {
+        showToast(`Stok habis!`, "danger");
+        return;
+      }
+      cart.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        qty: 1,
+      });
     }
-    
-    function searchCustomers(query) {
-        $.ajax({
-            url: '/customers/api/search?q=' + query,
-            method: 'GET',
-            success: function(customers) {
-                let html = '';
-                
-                if (customers.length === 0) {
-                    html = '<tr><td colspan="4" class="text-center">Pelanggan tidak ditemukan</td></tr>';
-                } else {
-                    customers.forEach(function(customer) {
-                        html += `
+    renderCart();
+  }
+
+  function updateQty(index, change) {
+    let item = cart[index];
+    let newQty = item.qty + change;
+
+    if (newQty > item.stock) {
+      showToast("Stok maks tercapai", "warning");
+      return;
+    }
+
+    if (newQty <= 0) {
+      if (confirm("Hapus produk ini?")) {
+        cart.splice(index, 1);
+      }
+    } else {
+      item.qty = newQty;
+    }
+    renderCart();
+  }
+
+  function removeCartItem(index) {
+    cart.splice(index, 1);
+    renderCart();
+  }
+
+  function renderCart() {
+    const tbody = $("#cartItems");
+    tbody.empty();
+
+    if (cart.length === 0) {
+      tbody.html(`
+                <tr id="emptyCartMessage">
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="fas fa-basket-shopping fa-3x mb-3"></i>
+                        <p>Keranjang masih kosong.</p>
+                    </td>
+                </tr>
+            `);
+      $("#cartSubtotal").text(rupiah.format(0));
+      $("#cartTotal").text(rupiah.format(0));
+      $("#discountRow").hide();
+      return;
+    }
+
+    let subtotal = 0;
+
+    cart.forEach((item, index) => {
+      let itemTotal = item.price * item.qty;
+      subtotal += itemTotal;
+
+      tbody.append(`
+                <tr>
+                    <td><div class="fw-bold">${item.name}</div></td>
+                    <td>${rupiah.format(item.price)}</td>
+                    <td>
+                        <div class="input-group input-group-sm" style="width: 100px;">
+                            <button class="btn btn-outline-secondary" onclick="updateQty(${index}, -1)">-</button>
+                            <input type="text" class="form-control text-center px-1" value="${
+                              item.qty
+                            }" readonly>
+                            <button class="btn btn-outline-secondary" onclick="updateQty(${index}, 1)">+</button>
+                        </div>
+                    </td>
+                    <td class="text-end fw-bold">${rupiah.format(
+                      itemTotal
+                    )}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm text-danger" onclick="removeCartItem(${index})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `);
+    });
+
+    // Perhitungan Diskon
+    let discount = 0;
+    if (activePromo) {
+      if (activePromo.type === "percentage_discount") {
+        discount = subtotal * (activePromo.value / 100);
+      } else if (activePromo.type === "fixed_discount") {
+        discount = activePromo.value;
+      }
+      if (discount > subtotal) discount = subtotal;
+    }
+
+    $("#cartSubtotal").text(rupiah.format(subtotal));
+    $("#cartDiscount").text(`- ${rupiah.format(discount)}`);
+    $("#cartTotal").text(rupiah.format(subtotal - discount));
+
+    if (discount > 0) {
+      $("#discountRow").show();
+      $("#discountLabel").text(
+        activePromo.type === "percentage_discount"
+          ? `(${activePromo.value}%)`
+          : ""
+      );
+    } else {
+      $("#discountRow").hide();
+    }
+  }
+
+  // --- CUSTOMER FUNCTIONS (FIXED) ---
+
+  function searchCustomersModal() {
+    const query = $("#modalCustomerSearch").val();
+
+    // Panggil API
+    $.ajax({
+      url: `/customers/api/search?q=${query}`,
+      method: "GET",
+      success: function (data) {
+        let html = "";
+        if (data.length === 0) {
+          html =
+            '<tr><td colspan="3" class="text-center text-muted">Tidak ditemukan</td></tr>';
+        } else {
+          data.forEach((c) => {
+            html += `
                             <tr>
-                                <td>${customer.name}</td>
-                                <td>${customer.phone || '-'}</td>
-                                <td>${customer.email || '-'}</td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="selectCustomer(${customer.id}, '${customer.name}', '${customer.phone}', '${customer.email}')">
-                                        <i class="fas fa-check"></i> Pilih
-                                    </button>
+                                    <div class="fw-bold">${c.name}</div>
+                                    <small class="text-muted">${c.email}</small>
+                                </td>
+                                <td>${c.phone || "-"}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="selectCustomer(${
+                                      c.id
+                                    })">Pilih</button>
                                 </td>
                             </tr>
                         `;
-                    });
-                }
-                
-                $('#customerList').html(html);
-                customerModal.show();
-            },
-            error: function() {
-                $('#customerList').html('<tr><td colspan="4" class="text-center">Terjadi kesalahan</td></tr>');
-            }
-        });
-    }
-    
-    function selectCustomer(id, name, phone, email) {
-        selectedCustomer = {
-            id: id,
-            name: name,
-            phone: phone,
-            email: email
-        };
-        
-        updateCustomerInfo();
-        customerModal.hide();
-        $('#customerSearch').val(name);
-    }
-    
-    function updateCustomerInfo() {
-        if (!selectedCustomer) {
-            $('#customerInfo').html('');
-            $('#customerDetails').html('<p class="text-muted">Pilih pelanggan untuk melihat informasi</p>');
-            $('#segmentPromotions').html('<p class="text-muted">Promosi akan muncul setelah pelanggan dipilih</p>');
-            return;
+          });
         }
-        
-        $('#customerInfo').html(`
-            <div class="alert alert-info">
-                <strong>${selectedCustomer.name}</strong>
-                ${selectedCustomer.phone ? `<br>Telepon: ${selectedCustomer.phone}` : ''}
-                ${selectedCustomer.email ? `<br>Email: ${selectedCustomer.email}` : ''}
+        $("#customerListModal").html(html);
+      },
+      error: function () {
+        $("#customerListModal").html(
+          '<tr><td colspan="3" class="text-center text-danger">Gagal memuat data</td></tr>'
+        );
+      },
+    });
+  }
+
+  function selectCustomer(id) {
+    // Ambil detail lengkap (termasuk segmen & promo)
+    $.ajax({
+      url: `/sales/api/customer-segments/${id}`,
+      method: "GET",
+      success: function (data) {
+        selectedCustomer = data.customer;
+
+        // Update UI Pelanggan
+        $("#customerSearchInput").val(data.customer.name);
+        $("#custNameDisplay").text(data.customer.name);
+        $("#custPhoneDisplay").text(data.customer.phone || "No Phone");
+
+        $("#guestInfoPanel").hide();
+        $("#customerInfoPanel").show();
+
+        // Render Badge Segmen
+        let segHtml = "";
+        data.segments.forEach((seg) => {
+          segHtml += `<span class="badge me-1" style="background-color: ${seg.color}">${seg.name}</span>`;
+        });
+        $("#segmentBadges").html(
+          segHtml || '<span class="badge bg-secondary">Belum ada segmen</span>'
+        );
+
+        // Cek Promosi
+        if (data.promotions.length > 0) {
+          availablePromo = data.promotions[0];
+          renderPromoCard(availablePromo);
+        } else {
+          availablePromo = null;
+          activePromo = null;
+          $("#promoContainer").html(
+            '<div class="alert alert-secondary small mb-0">Tidak ada promosi khusus.</div>'
+          );
+        }
+
+        // Tutup Modal Pelanggan
+        const modalEl = document.getElementById("customerModal");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        renderCart();
+      },
+    });
+  }
+
+  function renderPromoCard(promo) {
+    let promoText = promo.description;
+    let btnHtml = "";
+
+    if (activePromo && activePromo === promo) {
+      btnHtml = `<button class="btn btn-sm btn-outline-danger w-100 mt-2" onclick="togglePromo(false)">Batalkan Promo</button>`;
+    } else {
+      btnHtml = `<button class="btn btn-sm btn-success w-100 mt-2" onclick="togglePromo(true)">Gunakan Promo</button>`;
+    }
+
+    $("#promoContainer").html(`
+            <div class="alert alert-success mb-0 border-0">
+                <i class="fas fa-gift me-1"></i> <strong>Promo Tersedia!</strong><br>
+                <small>${promoText}</small>
+                ${btnHtml}
             </div>
         `);
+  }
 
-        // Reset promosi saat ganti pelanggan
-        currentPromotion = null;
-        availablePromotion = null;
-        
-        // Get customer segments and promotions
-        if (selectedCustomer.id > 0) {
-            $.ajax({
-                url: `/sales/api/customer-segments/${selectedCustomer.id}`,
-                method: 'GET',
-                success: function(data) {
-                    let customerHtml = `
-                        <h6>${data.customer.name}</h6>
-                        ${data.customer.phone ? `<p>Telepon: ${data.customer.phone}</p>` : ''}
-                        ${data.customer.email ? `<p>Email: ${data.customer.email}</p>` : ''}
-                    `;
-                    
-                    let promotionsHtml = '';
-                    
-                    if (data.segments.length > 0) {
-                        customerHtml += '<h6 class="mt-3">Segmen:</h6>';
-                        
-                        data.segments.forEach(function(segment) {
-                            customerHtml += `
-                                <span class="badge me-1" style="background-color: ${segment.color};">
-                                    ${segment.name}
-                                </span>
-                            `;
-                            
-                            // Add promotions based on segment
-                            if (segment.name === 'VIP') {
-                                promotionsHtml += `
-                                    <div class="alert alert-success">
-                                        <strong>Promosi VIP:</strong> Diskon 10% untuk semua produk
-                                    </div>
-                                `;
-                            } else if (segment.name === 'Frequent Buyer') {
-                                promotionsHtml += `
-                                    <div class="alert alert-info">
-                                        <strong>Promosi Frequent Buyer:</strong> Beli 3 gratis 1 untuk produk tertentu
-                                    </div>
-                                `;
-                            } else if (segment.name === 'Occasional Shopper') {
-                                promotionsHtml += `
-                                    <div class="alert alert-warning">
-                                        <strong>Promosi Occasional Shopper:</strong> Diskon 5% untuk pembelian di atas Rp 500.000
-                                    </div>
-                                `;
-                            }
-                        });
-                    } else {
-                        customerHtml += '<p class="text-muted">Belum ada segmen</p>';
-                        promotionsHtml = `
-                            <div class="alert alert-secondary">
-                                <strong>Promosi Umum:</strong> Diskon 2% untuk semua pelanggan
-                            </div>
-                        `;
-                    }
-                    
-                    $('#customerDetails').html(customerHtml);
+  function togglePromo(enable) {
+    if (enable) {
+      activePromo = availablePromo;
+      showToast("Promosi diterapkan!", "success");
+    } else {
+      activePromo = null;
+      showToast("Promosi dibatalkan.", "info");
+    }
+    renderPromoCard(availablePromo);
+    renderCart();
+  }
 
-                    if (data.promotions.length > 0) {
-                        // Ambil promosi pertama (untuk sederhananya, satu pelanggan satu promosi)
-                        availablePromotion = data.promotions[0]; 
-                    
-                        promotionsHtml = `
-                            <div class="alert alert-success d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>Promosi Tersedia:</strong> ${availablePromotion.description}
-                                </div>
-                                <div id="promotionButtonContainer">
-                                    <!-- Tombol akan dirender oleh fungsi updatePromotionButtonUI() -->
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        promotionsHtml = `
-                            <div class="alert alert-secondary">
-                                <strong>Tidak ada promosi untuk segmen ini.</strong>
-                            </div>
-                        `;
-                    }
-                    
-                    $('#segmentPromotions').html(promotionsHtml);
+  function resetCustomer() {
+    selectedCustomer = null;
+    activePromo = null;
+    availablePromo = null;
 
-                    // Panggil fungsi untuk menggambar tombol yang benar
-                    updatePromotionButtonUI();
-                },
-                error: function() {
-                    $('#customerDetails').html('<p class="text-danger">Gagal memuat informasi pelanggan</p>');
-                    $('#segmentPromotions').html('<p class="text-danger">Gagal memuat promosi</p>');
-                }
-            });
-        } else {
-            // Generic customer
-            $('#customerDetails').html(`
-                <h6>${selectedCustomer.name}</h6>
-            `);
-            
-            $('#segmentPromotions').html(`
-                <div class="alert alert-secondary">
-                    <strong>Promosi Umum:</strong> Diskon 2% untuk semua pelanggan
+    $("#customerSearchInput").val("");
+    $("#customerInfoPanel").hide();
+    $("#guestInfoPanel").show();
+    $("#promoContainer").html(
+      '<div class="text-center text-muted small py-2">Pilih pelanggan untuk melihat promo.</div>'
+    );
+
+    renderCart();
+  }
+
+  function saveNewCustomer() {
+    // Logika simpan pelanggan baru via Modal
+    let name = $("#newCustName").val();
+    let phone = $("#newCustPhone").val();
+    let email = $("#newCustEmail").val();
+
+    if (!name || !phone) {
+      alert("Nama dan Telepon wajib diisi");
+      return;
+    }
+
+    // Gunakan form submit biasa untuk kesederhanaan, lalu redirect kembali ke POS
+    // Atau gunakan AJAX ke endpoint /customers/add jika sudah dimodif untuk JSON
+    // Karena endpoint kita return HTML, kita pakai trik sederhana:
+    // Submit form -> Page reload (bukan AJAX)
+    // Agar benar, backend harus support API.
+    // Solusi Cepat: Redirect user ke halaman tambah pelanggan di tab baru
+    window.open("{{ url_for('customers.add_customer') }}", "_blank");
+  }
+
+  function checkout() {
+    if (cart.length === 0) {
+      showToast("Keranjang kosong!", "warning");
+      return;
+    }
+
+    const payload = {
+      customer_id: selectedCustomer ? selectedCustomer.id : 0,
+      items: cart.map((i) => ({ product_id: i.id, quantity: i.qty })),
+      payment_method: $("#paymentMethod").val(),
+      notes: $("#notes").val(),
+    };
+
+    $("#checkoutBtn")
+      .prop("disabled", true)
+      .html('<i class="fas fa-spinner fa-spin me-2"></i> Memproses...');
+
+    $.ajax({
+      url: "/sales/api/checkout",
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(payload),
+      success: function (response) {
+        $("#successTransId").text("#" + response.transaction_id);
+        $("#successTotal").text(rupiah.format(response.total_net));
+
+        var successModal = new bootstrap.Modal(
+          document.getElementById("successModal")
+        );
+        successModal.show();
+      },
+      error: function (xhr) {
+        let msg = "Terjadi kesalahan sistem";
+        if (xhr.responseJSON && xhr.responseJSON.message)
+          msg = xhr.responseJSON.message;
+        alert(msg);
+      },
+      complete: function () {
+        $("#checkoutBtn")
+          .prop("disabled", false)
+          .html('<i class="fas fa-check-circle me-2"></i> PROSES PEMBAYARAN');
+      },
+    });
+  }
+
+  function resetTransaction(closeModal = false) {
+    cart = [];
+    resetCustomer();
+    $("#notes").val("");
+    $("#paymentMethod").val("cash");
+    renderCart();
+
+    if (closeModal) {
+      const el = document.getElementById("successModal");
+      const modal = bootstrap.Modal.getInstance(el);
+      if (modal) modal.hide();
+    }
+  }
+
+  function showToast(message, type = "info") {
+    const bgClass =
+      type === "success"
+        ? "bg-success"
+        : type === "danger"
+        ? "bg-danger"
+        : "bg-info";
+    const toastHTML = `
+            <div class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
-            `);
-        }
-    }
+            </div>
+        `;
 
-    function addToCart(productId, productName, price, stock) {
-        // Check if product already in cart
-        const existingItem = cart.find(item => item.product_id === productId);
-        
-        if (existingItem) {
-            if (existingItem.quantity < stock) {
-                existingItem.quantity += 1;
-            } else {
-                alert('Stok tidak mencukupi');
-                return;
-            }
-        } else {
-            if (stock > 0) {
-                cart.push({
-                    product_id: productId,
-                    name: productName,
-                    price: price,
-                    quantity: 1,
-                    stock: stock
-                });
-            } else {
-                alert('Produk sedang habis');
-                return;
-            }
-        }
-        
-        updateCart();
-        productModal.hide();
-        $('#productSearch').val('');
-    }
-    
-    // Fungsi untuk menampilkan notifikasi Bootstrap
-    function showNotification(message, type = 'info') {
-        const notificationContainer = document.getElementById('notification-container');
-        
-        // Buat elemen notifikasi
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.role = 'alert';
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-        
-        // Tambahkan ke container
-        notificationContainer.appendChild(alertDiv);
-        
-        // Hapus notifikasi otomatis setelah 4 detik
-        setTimeout(() => {
-            alertDiv.classList.remove('show');
-            setTimeout(() => {
-                notificationContainer.removeChild(alertDiv);
-            }, 150); // Tunggu animasi fade-out selesai
-        }, 4000);
-    }
+    const $toast = $(toastHTML);
+    $("#toastContainer").append($toast);
+    const toast = new bootstrap.Toast($toast[0]);
+    toast.show();
 
-    function updatePromotionButtonUI() {
-        const buttonContainer = $('#promotionButtonContainer');
-        if (!buttonContainer.length) return;
-
-        if (currentPromotion) {
-            // Jika promosi sudah diterapkan, tampilkan tombol "Batal Terapkan"
-            buttonContainer.html(`
-                <button type="button" class="btn btn-sm btn-warning" onclick="cancelPromotion()">
-                    <i class="fas fa-times me-1"></i>Batal Terapkan
-                </button>
-            `);
-        } else if (availablePromotion) {
-            // Jika ada promosi tersedia tapi belum diterapkan, tampilkan tombol "Terapkan"
-            buttonContainer.html(`
-                <button type="button" class="btn btn-sm btn-success" onclick="applyPromotion()">
-                    <i class="fas fa-check me-1"></i>Terapkan
-                </button>
-            `);
-        } else {
-            // Jika tidak ada promosi, kosongkan kontainer
-            buttonContainer.html('');
-        }
-    }
-    
-    function applyPromotion() {
-         if (!availablePromotion) {
-            showNotification('Tidak ada promosi yang bisa diterapkan.', 'info');
-            return;
-        }
-        
-        currentPromotion = availablePromotion; 
-    
-        showNotification('Promosi berhasil diterapkan!', 'success');
-        
-        // Perbarui tampilan keranjang dan tombol
-        updateCart();
-        updatePromotionButtonUI();
-    }
-
-    function cancelPromotion() {
-        if (!currentPromotion) {
-            showNotification('Tidak ada promosi yang aktif untuk dibatalkan.', 'info');
-            return;
-        }
-        
-        currentPromotion = null; // Hapus promosi yang aktif
-        showNotification('Promosi berhasil dibatalkan.', 'warning');
-        updateCart(); // Perbarui tampilan keranjang (diskon akan hilang)
-        updatePromotionButtonUI(); // Perbarui tombol kembali ke "Terapkan"
-    }
-    
-    function updateCart() {
-        if (cart.length === 0) {
-            $('#cartItems').html('<tr id="emptyCartMessage"><td colspan="5" class="text-center">Keranjang belanja kosong</td></tr>');
-            $('#cartTotal').text('Rp 0');
-            $('#discountRow').hide();
-            return;
-        }
-        
-        let html = '';
-        let total = 0;
-        let subtotal = 0;
-        
-        cart.forEach(function(item, index) {
-            subtotal += item.price * item.quantity;
-            
-            html += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>Rp ${item.price.toLocaleString('id-ID')}</td>
-                    <td>
-                        <div class="input-group input-group-sm">
-                            <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <input type="number" class="form-control text-center" value="${item.quantity}" min="1" max="${item.stock}" onchange="setQuantity(${index}, this.value)">
-                            <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </td>
-                    <td>Rp ${subtotal.toLocaleString('id-ID')}</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="removeFromCart(${index})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        $('#cartItems').html(html);
-
-        let discountAmount = 0;
-        let finalTotal = subtotal;
-
-        // Hitung diskon jika ada promosi
-        if (currentPromotion) {
-            if (currentPromotion.type === 'percentage_discount') {
-                // Contoh: Untuk Occasional Shopper, diskon hanya jika total > 100000
-                if (currentPromotion.value === 2.0 && subtotal <= 100000) {
-                    // Tidak ada diskon
-                } else {
-                    discountAmount = subtotal * (currentPromotion.value / 100);
-                }
-            } else if (currentPromotion.type === 'fixed_discount') {
-                discountAmount = currentPromotion.value;
-            }
-        }
-        
-        finalTotal = subtotal - discountAmount;
-
-         $('#cartTotal').text('Rp ' + finalTotal.toLocaleString('id-ID'));
-    }
-    
-    function updateQuantity(index, change) {
-        const item = cart[index];
-        const newQuantity = item.quantity + change;
-        
-        if (newQuantity > 0 && newQuantity <= item.stock) {
-            item.quantity = newQuantity;
-            updateCart();
-        } else if (newQuantity > item.stock) {
-            alert('Stok tidak mencukupi');
-        }
-    }
-    
-    function setQuantity(index, value) {
-        const item = cart[index];
-        const newQuantity = parseInt(value);
-        
-        if (newQuantity > 0 && newQuantity <= item.stock) {
-            item.quantity = newQuantity;
-            updateCart();
-        } else if (newQuantity > item.stock) {
-            alert('Stok tidak mencukupi');
-            updateCart();
-        } else {
-            alert('Jumlah harus lebih dari 0');
-            updateCart();
-        }
-    }
-    
-    function removeFromCart(index) {
-        cart.splice(index, 1);
-        updateCart();
-    }
-
-    function checkout() {
-        const paymentMethod = $('#paymentMethod').val();
-        const notes = $('#notes').val();
-        
-        // Calculate total on the frontend for display
-        let subtotal = 0;
-        cart.forEach(function(item) {
-            subtotal += item.price * item.quantity;
-        });
-        
-        let discountAmount = 0;
-        if (currentPromotion) {
-            if (currentPromotion.type === 'percentage_discount') {
-                if (currentPromotion.value === 2.0 && subtotal <= 100000) {
-                    // Tidak ada diskon
-                } else {
-                    discountAmount = subtotal * (currentPromotion.value / 100);
-                }
-            } else if (currentPromotion.type === 'fixed_discount') {
-                discountAmount = currentPromotion.value;
-            }
-        }
-        let finalTotal = subtotal - discountAmount;
-        
-        // Prepare data for API
-        const data = {
-            customer_id: selectedCustomer.id,
-            items: cart.map(function(item) {
-                return {
-                    product_id: item.product_id,
-                    quantity: item.quantity
-                };
-            }),
-            payment_method: paymentMethod,
-            notes: notes,
-            // --- KIRIM DATA PROMOSI KE BACKEND ---
-            promotion_type: currentPromotion ? currentPromotion.type : null,
-            promotion_value: currentPromotion ? currentPromotion.value : null,
-            discount_amount: discountAmount
-        };
-        
-        // Send checkout request
-        $.ajax({
-            url: '/sales/api/checkout',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function(response) {
-                if (response.success) {
-                    $('#transactionId').text(response.transaction_id);
-                    $('#transactionTotal').text('Rp ' + response.total_amount.toLocaleString('id-ID'));
-                    checkoutSuccessModal.show();
-                    resetTransaction();
-                } else {
-                    alert('Checkout gagal: ' + response.message);
-                }
-            },
-            error: function() {
-                alert('Terjadi kesalahan saat melakukan checkout');
-            }
-        });
-    }
-    
-    function resetTransaction() {
-        cart = [];
-        selectedCustomer = null;
-        currentPromotion = null;
-        availablePromotion = null;
-        $('#customerSearch').val('');
-        $('#productSearch').val('');
-        $('#paymentMethod').val('cash');
-        $('#notes').val('');
-        updateCart();
-        updateCustomerInfo();
-    }
+    $toast.on("hidden.bs.toast", function () {
+      $(this).remove();
+    });
+  }
 </script>
 {% endblock %}

@@ -1,83 +1,107 @@
-{% extends "layout.html" %}
-
-{% block page_title %}{{ title }}{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block page_title %}{{ title }}{% endblock %} {%
+block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
-            </div>
-            <div class="card-body">
-                <form method="POST">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        {{ form.segment_name.label(class="form-label") }}
-                        {{ form.segment_name(class="form-control") }}
-                        {% if form.segment_name.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.segment_name.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control", rows="3") }}
-                        {% if form.description.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.description.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.color.label(class="form-label") }}
-                        <div class="input-group">
-                            {{ form.color(class="form-control") }}
-                            <span class="input-group-text" id="colorPreview" style="background-color: {{ form.color.data or '#007bff' }}; width: 40px;"></span>
-                        </div>
-                        {% if form.color.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.color.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <div class="form-text">Gunakan format warna hex, misalnya #FF5733.</div>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('segments.list_segments') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Kembali
-                        </a>
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-layer-group me-2"></i>{{ title }}
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {{ form.hidden_tag() }}
 
-{% block scripts %}
+          <div class="mb-3">
+            {{ form.segment_name.label(class="form-label fw-bold") }}
+            <span class="text-danger">*</span>
+            {% if form.segment_name.errors %} {{
+            form.segment_name(class="form-control is-invalid",
+            placeholder="Contoh: Platinum User") }}
+            <div class="invalid-feedback">
+              {% for error in form.segment_name.errors %} {{ error }} {% endfor
+              %}
+            </div>
+            {% else %} {{ form.segment_name(class="form-control",
+            placeholder="Contoh: Platinum User") }} {% endif %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.description.label(class="form-label fw-bold") }} {% if
+            form.description.errors %} {{ form.description(class="form-control
+            is-invalid", rows="3", placeholder="Deskripsi kriteria segmen...")
+            }}
+            <div class="invalid-feedback">
+              {% for error in form.description.errors %} {{ error }} {% endfor
+              %}
+            </div>
+            {% else %} {{ form.description(class="form-control", rows="3",
+            placeholder="Deskripsi kriteria segmen...") }} {% endif %}
+          </div>
+
+          <div class="mb-4">
+            {{ form.color.label(class="form-label fw-bold") }}
+            <div class="input-group">
+              <span class="input-group-text p-1">
+                <input
+                  type="color"
+                  class="form-control form-control-color border-0"
+                  id="colorPicker"
+                  value="{{ form.color.data or '#007bff' }}"
+                  title="Pilih Warna"
+                />
+              </span>
+
+              {% if form.color.errors %} {{ form.color(class="form-control
+              is-invalid", id="colorInput", placeholder="#RRGGBB") }}
+              <div class="invalid-feedback">
+                {% for error in form.color.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.color(class="form-control font-monospace",
+              id="colorInput", placeholder="#RRGGBB") }} {% endif %}
+            </div>
+            <div class="form-text">
+              Klik kotak warna untuk memilih atau ketik kode Hex.
+            </div>
+          </div>
+
+          <hr />
+
+          <div class="d-flex justify-content-between">
+            <a
+              href="{{ url_for('segments.list_segments') }}"
+              class="btn btn-secondary"
+            >
+              <i class="fas fa-arrow-left me-1"></i> Batal
+            </a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="fas fa-save me-1"></i> Simpan Segmen
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
 <script>
-    // Tambahkan event listener untuk memperbarui preview warna secara real-time
-    document.addEventListener('DOMContentLoaded', function() {
-        const colorInput = document.querySelector('input[name="color"]');
-        const colorPreview = document.getElementById('colorPreview');
-        
-        if (colorInput && colorPreview) {
-            colorInput.addEventListener('input', function() {
-                colorPreview.style.backgroundColor = this.value;
-            });
-        }
+  document.addEventListener("DOMContentLoaded", function () {
+    const colorInput = document.getElementById("colorInput");
+    const colorPicker = document.getElementById("colorPicker");
+
+    // 1. Saat Color Picker berubah -> Update Text Input
+    colorPicker.addEventListener("input", function () {
+      colorInput.value = this.value;
     });
+
+    // 2. Saat Text Input berubah -> Update Color Picker (jika format valid)
+    colorInput.addEventListener("input", function () {
+      const val = this.value;
+      // Cek regex Hex Color sederhana
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        colorPicker.value = val;
+      }
+    });
+  });
 </script>
 {% endblock %}

@@ -1,101 +1,262 @@
-{% extends "layout.html" %}
-
-{% block page_title %}Daftar Produk{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block page_title %}Daftar Produk{% endblock %} {%
+block content %}
 
 <div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Semua Produk</h6>
-            <div class="btn-toolbar mb-2 mb-md-0">
-                <div class="btn-group me-2">
-                    <a href="{{ url_for('products.add_product') }}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus me-1"></i> Tambah Produk
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="card-body">
-        {% if products %}
-        <div class="table-responsive">
-            <table class="table table-bordered" id="productsTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>SKU</th>
-                        <th>Nama</th>
-                        <th>Kategori</th>
-                        <th>Satuan</th>
-                        <th>Harga</th>
-                        <th>Stok</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr>
-                        <td>{{ product.sku }}</td>
-                        <td>{{ product.name }}</td>
-                        <td>{{ product.category.title() if product.category else '-' }}</td>
-                        <td>{{ product.unit.upper() }}</td>
-                        <td>Rp {{ "{:,.0f}".format(product.price) }}</td>
-                        <td>
-                            {% if product.stock < 10 %}
-                            <span class="badge bg-danger">{{ product.stock }}</span>
-                            {% elif product.stock < 50 %}
-                            <span class="badge bg-warning">{{ product.stock }}</span>
-                            {% else %}
-                            <span class="badge bg-success">{{ product.stock }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="table-actions">
-                            <a href="{{ url_for('products.edit_product', id=product.id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    
-                    <!-- Delete Modal -->
-                    <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ product.id }}" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="deleteModalLabel{{ product.id }}">Konfirmasi Hapus</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    Apakah Anda yakin ingin menghapus produk "{{ product.name }}"?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                    <form action="{{ url_for('products.delete_product', id=product.id) }}" method="POST">
-                                        <button type="submit" class="btn btn-danger">Hapus</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p>Belum ada produk. <a href="{{ url_for('products.add_product') }}">Tambah produk pertama</a>.</p>
-        {% endif %}
-    </div>
-</div>
-{% endblock %}
+  <div class="card-header py-3 bg-white">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <h6 class="m-0 font-weight-bold text-primary">
+        <i class="fas fa-boxes me-2"></i>Data Produk
+      </h6>
 
-{% block scripts %}
+      <div class="d-flex gap-2 mt-2 mt-md-0">
+        <form
+          method="GET"
+          action="{{ url_for('products.list_products') }}"
+          class="d-flex"
+        >
+          <div class="input-group">
+            <input
+              type="text"
+              name="q"
+              class="form-control form-control-sm"
+              placeholder="Nama/SKU..."
+              value="{{ search_query or '' }}"
+            />
+            <button class="btn btn-primary btn-sm" type="submit">
+              <i class="fas fa-search"></i>
+            </button>
+            {% if search_query %}
+            <a
+              href="{{ url_for('products.list_products') }}"
+              class="btn btn-secondary btn-sm"
+              title="Reset"
+            >
+              <i class="fas fa-times"></i>
+            </a>
+            {% endif %}
+          </div>
+        </form>
+
+        <a
+          href="{{ url_for('products.add_product') }}"
+          class="btn btn-sm btn-success text-nowrap"
+        >
+          <i class="fas fa-plus me-1"></i> Baru
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body">
+    {% if products.items %}
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-hover align-middle"
+        id="productsTable"
+        width="100%"
+      >
+        <thead class="table-light">
+          <tr>
+            <th class="text-center" width="5%">No.</th>
+            <th>SKU / Barcode</th>
+            <th>Nama Produk</th>
+            <th>Kategori</th>
+            <th class="text-end">Harga</th>
+            <th class="text-center">Stok</th>
+            <th class="text-center" width="15%">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products.items %}
+          <tr>
+            <td class="text-center">
+              {{ (products.page - 1) * products.per_page + loop.index }}
+            </td>
+            <td>
+              <span class="badge bg-light text-dark border font-monospace"
+                >{{ product.sku }}</span
+              >
+            </td>
+            <td>
+              <div class="fw-bold">{{ product.name }}</div>
+              <small
+                class="text-muted d-block text-truncate"
+                style="max-width: 200px"
+              >
+                {{ product.description or '-' }}
+              </small>
+            </td>
+            <td>
+              {% if product.category %}
+              <span class="badge bg-info text-dark"
+                >{{ product.category.title() }}</span
+              >
+              {% else %} - {% endif %}
+            </td>
+            <td class="text-end fw-bold text-success">
+              {{ product.price | rp }}
+              <small class="text-muted fw-normal">/ {{ product.unit }}</small>
+            </td>
+            <td class="text-center">
+              {% if product.stock < 10 %}
+              <span class="badge bg-danger rounded-pill"
+                >{{ product.stock }}</span
+              >
+              {% elif product.stock < 50 %}
+              <span class="badge bg-warning text-dark rounded-pill"
+                >{{ product.stock }}</span
+              >
+              {% else %}
+              <span class="badge bg-success rounded-pill"
+                >{{ product.stock }}</span
+              >
+              {% endif %}
+            </td>
+            <td class="text-center table-actions">
+              <div class="btn-group" role="group">
+                <a
+                  href="{{ url_for('products.edit_product', id=product.id) }}"
+                  class="btn btn-sm btn-warning text-white"
+                  title="Edit"
+                >
+                  <i class="fas fa-edit"></i>
+                </a>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-danger"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deleteModal"
+                  data-id="{{ product.id }}"
+                  data-name="{{ product.name }}"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <nav aria-label="Page navigation" class="mt-3">
+      <ul class="pagination justify-content-center">
+        <li class="page-item {% if not products.has_prev %}disabled{% endif %}">
+          <a
+            class="page-link"
+            href="{{ url_for('products.list_products', page=products.prev_num, q=search_query) }}"
+            tabindex="-1"
+            >Previous</a
+          >
+        </li>
+
+        {% for page_num in products.iter_pages(left_edge=1, right_edge=1,
+        left_current=1, right_current=2) %} {% if page_num %}
+        <li
+          class="page-item {% if page_num == products.page %}active{% endif %}"
+        >
+          <a
+            class="page-link"
+            href="{{ url_for('products.list_products', page=page_num, q=search_query) }}"
+            >{{ page_num }}</a
+          >
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %} {% endfor %}
+
+        <li class="page-item {% if not products.has_next %}disabled{% endif %}">
+          <a
+            class="page-link"
+            href="{{ url_for('products.list_products', page=products.next_num, q=search_query) }}"
+            >Next</a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-box-open fa-3x text-gray-300 mb-3"></i>
+      <p>Data produk tidak ditemukan.</p>
+      {% if search_query %}
+      <a
+        href="{{ url_for('products.list_products') }}"
+        class="btn btn-secondary btn-sm"
+        >Reset Pencarian</a
+      >
+      {% else %}
+      <a
+        href="{{ url_for('products.add_product') }}"
+        class="btn btn-primary btn-sm"
+        >Tambah Produk Pertama</a
+      >
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="deleteModal"
+  tabindex="-1"
+  aria-labelledby="deleteModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deleteModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Konfirmasi Hapus
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          Apakah Anda yakin ingin menghapus produk
+          <strong id="productName"></strong>?
+        </p>
+        <div class="alert alert-warning small">
+          <i class="fas fa-info-circle me-1"></i> Produk yang sudah pernah
+          terjual tidak dapat dihapus (akan ditolak sistem). Sebaiknya set stok
+          ke 0 jika ingin menonaktifkan.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Batal
+        </button>
+        <form id="deleteForm" method="POST" action="">
+          <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block scripts %}
 <script>
-    $(document).ready(function() {
-        $('#productsTable').DataTable({
-            responsive: true
-        });
-    });
+  // Script untuk menangani Single Delete Modal
+  var deleteModal = document.getElementById("deleteModal");
+  deleteModal.addEventListener("show.bs.modal", function (event) {
+    var button = event.relatedTarget;
+    var id = button.getAttribute("data-id");
+    var name = button.getAttribute("data-name");
+
+    var namePlaceholder = deleteModal.querySelector("#productName");
+    var deleteForm = deleteModal.querySelector("#deleteForm");
+
+    namePlaceholder.textContent = name;
+
+    // Update Action URL secara dinamis
+    var baseUrl = "{{ url_for('products.delete_product', id=0) }}";
+    deleteForm.action = baseUrl.replace("/0", "/" + id);
+  });
 </script>
 {% endblock %}

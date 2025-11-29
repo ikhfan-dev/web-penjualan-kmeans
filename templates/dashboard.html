@@ -1,201 +1,261 @@
-{% extends "layout.html" %}
-
-{% block page_title %}Dashboard{% endblock %}
-
-{% block content %}
-<div class="row">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Produk</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ products_count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-box fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+{% extends "layout.html" %} {% block page_title %}Dashboard Ringkasan{% endblock
+%} {% block content %}
+<div class="row mb-4">
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-start border-primary border-4 shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+              Total Produk
             </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Pelanggan</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ customers_count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-users fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">
+              {{ products_count }}
             </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-box fa-2x text-gray-300"></i>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Transaksi Hari Ini</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_transactions }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-receipt fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-start border-success border-4 shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs fw-bold text-success text-uppercase mb-1">
+              Total Pelanggan
             </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">
+              {{ customers_count }}
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-users fa-2x text-gray-300"></i>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Stok Rendah</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ low_stock_count }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                    </div>
-                </div>
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-start border-info border-4 shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs fw-bold text-info text-uppercase mb-1">
+              Transaksi Hari Ini
             </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">
+              {{ today_transactions }}
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-receipt fa-2x text-gray-300"></i>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-start border-warning border-4 shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+              Stok Menipis
+            </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">
+              {{ low_stock_count }}
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="row">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">Transaksi Terbaru</h6>
-                <a href="{{ url_for('sales.transactions') }}" class="btn btn-sm btn-primary">Lihat Semua</a>
-            </div>
-            <div class="card-body">
-                {% if recent_transactions %}
-                <div class="table-responsive">
-                    <table class="table table-bordered" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Pelanggan</th>
-                                <th>Total</th>
-                                <th>Tanggal</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for transaction in recent_transactions %}
-                            <tr>
-                                <td>{{ transaction.id }}</td>
-                                <td>{{ transaction.customer.name if transaction.customer else 'Walk-in Customer' }}</td>
-                                <td>Rp {{ "{:,.0f}".format(transaction.total_amount) }}</td>
-                                <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>
-                                    <a href="{{ url_for('sales.transaction_detail', id=transaction.id) }}" class="btn btn-sm btn-info">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p>Belum ada transaksi.</p>
-                {% endif %}
-            </div>
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white"
+      >
+        <h6 class="m-0 fw-bold text-primary">Transaksi Terbaru</h6>
+        <a
+          href="{{ url_for('sales.transactions') }}"
+          class="btn btn-sm btn-outline-primary"
+          >Lihat Semua</a
+        >
+      </div>
+      <div class="card-body">
+        {% if recent_transactions %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Pelanggan</th>
+                <th>Total</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for transaction in recent_transactions %}
+              <tr>
+                <td>#{{ transaction.id }}</td>
+                <td>
+                  {% if transaction.customer %} {{ transaction.customer.name }}
+                  {% else %}
+                  <span class="text-muted fst-italic">Umum</span>
+                  {% endif %}
+                </td>
+                <td class="fw-bold text-success">
+                  {{ transaction.total_amount | rp }}
+                </td>
+                <td class="small">
+                  {{ transaction.created_at.strftime('%d/%m %H:%M') }}
+                </td>
+                <td>
+                  <a
+                    href="{{ url_for('sales.transaction_detail', id=transaction.id) }}"
+                    class="btn btn-sm btn-info text-white"
+                    title="Lihat Detail"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="fas fa-inbox fa-3x mb-3"></i>
+          <p>Belum ada transaksi hari ini.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 fw-bold text-danger">
+          <i class="fas fa-exclamation-circle me-1"></i> Perlu Restock
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        {% if low_stock_products %}
+        <div class="list-group list-group-flush">
+          {% for product in low_stock_products %}
+          <a
+            href="{% if current_user.role == 'admin' %}{{ url_for('products.edit_product', id=product.id) }}{% else %}#{% endif %}"
+            class="list-group-item list-group-item-action"
+          >
+            <div
+              class="d-flex w-100 justify-content-between align-items-center"
+            >
+              <div>
+                <h6 class="mb-0 text-dark">{{ product.name }}</h6>
+                <small class="text-muted">SKU: {{ product.sku }}</small>
+              </div>
+              <span class="badge bg-danger rounded-pill"
+                >Sisa: {{ product.stock }}</span
+              >
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-3 text-center text-success">
+          <i class="fas fa-check-circle mb-1"></i> Semua stok aman.
+        </div>
+        {% endif %}
+      </div>
     </div>
 
-    <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Produk Stok Rendah</h6>
-            </div>
-            <div class="card-body">
-                {% if low_stock_products %}
-                <div class="list-group">
-                    {% for product in low_stock_products %}
-                    <a href="{{ url_for('products.edit_product', id=product.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ product.name }}</h6>
-                            <span class="badge bg-danger rounded-pill">{{ product.stock }}</span>
-                        </div>
-                        <p class="mb-1">SKU: {{ product.sku }}</p>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p>Tidak ada produk dengan stok rendah.</p>
-                {% endif %}
-            </div>
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 fw-bold text-primary">Aksi Cepat</h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('sales.pos') }}" class="btn btn-primary">
+            <i class="fas fa-cash-register me-2"></i> Transaksi Baru (POS)
+          </a>
+          <a
+            href="{{ url_for('customers.add_customer') }}"
+            class="btn btn-info text-white"
+          >
+            <i class="fas fa-user-plus me-2"></i> Tambah Pelanggan
+          </a>
+
+          {% if current_user.role == 'admin' %}
+          <a
+            href="{{ url_for('products.add_product') }}"
+            class="btn btn-success"
+          >
+            <i class="fas fa-plus me-2"></i> Tambah Produk
+          </a>
+          <a
+            href="{{ url_for('analytics.run_kmeans') }}"
+            class="btn btn-warning text-dark"
+          >
+            <i class="fas fa-brain me-2"></i> Jalankan AI Analitik
+          </a>
+          {% endif %}
         </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <div class="row">
-    <div class="col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Pelanggan Teratas</h6>
-            </div>
-            <div class="card-body">
-                {% if top_customers %}
-                <div class="list-group">
-                    {% for customer in top_customers %}
-                    <a href="{{ url_for('customers.edit_customer', id=customer.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ customer.name }}</h6>
-                            <span class="badge bg-primary rounded-pill">{{ customer.transaction_count }} transaksi</span>
-                        </div>
-                    </a>
-                    {% endfor %}
+  <div class="col-12">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 fw-bold text-primary">Pelanggan Paling Aktif</h6>
+      </div>
+      <div class="card-body">
+        {% if top_customers %}
+        <div class="row">
+          {% for customer in top_customers %}
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center p-3 border rounded bg-light">
+              <div class="flex-shrink-0">
+                <div
+                  class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                  style="width: 40px; height: 40px"
+                >
+                  <i class="fas fa-user"></i>
                 </div>
-                {% else %}
-                <p>Belum ada data pelanggan.</p>
-                {% endif %}
+              </div>
+              <div class="flex-grow-1 ms-3">
+                <h6 class="mb-0 fw-bold">{{ customer.name }}</h6>
+                <small class="text-muted"
+                  >{{ customer.transaction_count }} Transaksi</small
+                >
+              </div>
             </div>
+          </div>
+          {% endfor %}
         </div>
+        {% else %}
+        <p class="text-muted">Data pelanggan belum cukup.</p>
+        {% endif %}
+      </div>
     </div>
-
-    <div class="col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Aksi Cepat</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('sales.pos') }}" class="btn btn-primary">
-                        <i class="fas fa-shopping-cart me-2"></i> Transaksi Baru
-                    </a>
-                    <a href="{{ url_for('products.add_product') }}" class="btn btn-success">
-                        <i class="fas fa-plus me-2"></i> Tambah Produk
-                    </a>
-                    <a href="{{ url_for('customers.add_customer') }}" class="btn btn-info">
-                        <i class="fas fa-user-plus me-2"></i> Tambah Pelanggan
-                    </a>
-                    <a href="{{ url_for('analytics.run_kmeans') }}" class="btn btn-warning">
-                        <i class="fas fa-chart-pie me-2"></i> Jalankan Analitik
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // Any dashboard-specific JavaScript would go here
-</script>
 {% endblock %}

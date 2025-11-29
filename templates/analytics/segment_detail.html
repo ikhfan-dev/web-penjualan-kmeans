@@ -1,94 +1,250 @@
-{% extends "layout.html" %}
-
-{% block page_title %}Detail Segmen: {{ segment.segment_name }}{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-    <h1 class="h2"></h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-sm btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Kembali
-            </a>
-        </div>
-    </div>
+{% extends "layout.html" %} {% block page_title %}Detail Segmen: {{
+segment.segment_name }}{% endblock %} {% block content %}
+<div
+  class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+>
+  <div>
+    <h1 class="h2">Detail Segmen</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a href="{{ url_for('analytics.dashboard') }}">Analitik</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ segment.segment_name }}
+        </li>
+      </ol>
+    </nav>
+  </div>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <a
+      href="{{ url_for('analytics.dashboard') }}"
+      class="btn btn-sm btn-outline-secondary"
+    >
+      <i class="fas fa-arrow-left me-1"></i> Kembali ke Dashboard
+    </a>
+  </div>
 </div>
 
 <div class="row">
-    <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Informasi Segmen</h6>
-            </div>
-            <div class="card-body">
-                <p><strong>Nama Segmen:</strong> {{ segment.segment_name }}</p>
-                <p><strong>Deskripsi:</strong> {{ segment.description }}</p>
-                <p><strong>Jumlah Pelanggan:</strong> {{ customers|length }}</p>
-                <p><strong>Dibuat pada:</strong> {{ segment.created_at.strftime('%d/%m/%Y') }}</p>
-            </div>
+  <div class="col-lg-4 mb-4">
+    <div
+      class="card shadow h-100 border-start border-4 mb-4"
+      style="border-left-color: {{ segment.color }} !important;"
+    >
+      <div class="card-header py-3 d-flex align-items-center bg-white">
+        <i
+          class="fas fa-info-circle me-2"
+          style="color: {{ segment.color }};"
+        ></i>
+        <h6 class="m-0 fw-bold" style="color: {{ segment.color }};">
+          Profil Segmen
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3 text-center">
+          <span
+            class="badge rounded-pill px-3 py-2 fs-6"
+            style="background-color: {{ segment.color }};"
+          >
+            {{ segment.segment_name }}
+          </span>
         </div>
-    </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between px-0">
+            <span class="text-muted">Total Member</span>
+            <span class="fw-bold">{{ customers.total }} Orang</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0">
+            <span class="text-muted">Total Diskon Diberikan</span>
+            <span class="fw-bold text-success"
+              >{{ total_discount_given | rp }}</span
+            >
+          </li>
+        </ul>
+        <div class="mt-3">
+          <small class="text-muted fw-bold">Deskripsi:</small>
+          <p class="small text-muted fst-italic mt-1">
+            {{ segment.description }}
+          </p>
+        </div>
 
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Pelanggan dalam Segmen</h6>
-            </div>
-            <div class="card-body">
-                {% if customers %}
-                <div class="table-responsive">
-                    <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>No.</th>
-                                <th>Nama</th>
-                                <th>Telepon</th>
-                                <th>Email</th>
-                                <th>Terakhir Dianalisis</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for customer, membership in customers %}
-                            <tr>
-                                <td>{{ loop.index + 1 }}</td>
-                                <td>{{ customer.name }}</td>
-                                <td>{{ customer.phone or '-' }}</td>
-                                <td>{{ customer.email or '-' }}</td>
-                                <td>{{ membership.assigned_at.strftime('%d/%m/%Y') }}</td>
-                                <td class="table-actions">
-                                    <a href="{{ url_for('customers.edit_customer', id=customer.id) }}" class="btn btn-sm btn-info" title="Edit Pelanggan">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{{ url_for('customers.customer_transactions', customer_id=customer.id) }}" class="btn btn-sm btn-primary" title="Lihat Riwayat Transaksi">
-                                        <i class="fas fa-history"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p>Tidak ada pelanggan dalam segmen ini.</p>
-                {% endif %}
-            </div>
+        <div class="d-grid gap-2 mt-4">
+          <a
+            href="{{ url_for('promotions.add_promotion') }}"
+            class="btn btn-sm btn-outline-primary"
+          >
+            <i class="fas fa-tag me-1"></i> Buat Promo Segmen Ini
+          </a>
         </div>
+      </div>
     </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 fw-bold text-primary">
+          Daftar Pelanggan (Halaman {{ customers.page }})
+        </h6>
+      </div>
+      <div class="card-body">
+        {% if customers.items %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Nama Pelanggan</th>
+                <th>Kontak</th>
+                <th class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for customer in customers.items %}
+              <tr>
+                <td>#{{ customer.id }}</td>
+                <td>
+                  <div class="fw-bold">{{ customer.name }}</div>
+                  <div class="small text-muted">
+                    {{ customer.address | truncate(30) }}
+                  </div>
+                </td>
+                <td>
+                  {% if customer.phone %}
+                  <div class="small">
+                    <i class="fas fa-phone fa-fw me-1 text-muted"></i> {{
+                    customer.phone }}
+                  </div>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <div class="btn-group">
+                    <a
+                      href="{{ url_for('customers.customer_transactions', customer_id=customer.id) }}"
+                      class="btn btn-sm btn-info text-white"
+                      title="Riwayat Belanja"
+                      data-bs-toggle="tooltip"
+                    >
+                      <i class="fas fa-receipt"></i>
+                    </a>
+                    <a
+                      href="{{ url_for('customers.edit_customer', id=customer.id) }}"
+                      class="btn btn-sm btn-outline-secondary"
+                      title="Edit Profil"
+                      data-bs-toggle="tooltip"
+                    >
+                      <i class="fas fa-user-edit"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <nav aria-label="Page navigation" class="mt-4">
+          <ul class="pagination justify-content-center">
+            <li
+              class="page-item {% if not customers.has_prev %}disabled{% endif %}"
+            >
+              <a
+                class="page-link"
+                href="{{ url_for('analytics.segment_detail', id=segment.id, page=customers.prev_num) }}"
+                tabindex="-1"
+                >Previous</a
+              >
+            </li>
+            {% for page_num in customers.iter_pages(left_edge=1, right_edge=1,
+            left_current=1, right_current=2) %} {% if page_num %}
+            <li
+              class="page-item {% if page_num == customers.page %}active{% endif %}"
+            >
+              <a
+                class="page-link"
+                href="{{ url_for('analytics.segment_detail', id=segment.id, page=page_num) }}"
+                >{{ page_num }}</a
+              >
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">...</span>
+            </li>
+            {% endif %} {% endfor %}
+            <li
+              class="page-item {% if not customers.has_next %}disabled{% endif %}"
+            >
+              <a
+                class="page-link"
+                href="{{ url_for('analytics.segment_detail', id=segment.id, page=customers.next_num) }}"
+                >Next</a
+              >
+            </li>
+          </ul>
+        </nav>
+
+        {% else %}
+        <div class="text-center py-5">
+          <i class="fas fa-users-slash fa-3x text-gray-300 mb-3"></i>
+          <p class="text-muted">Tidak ada pelanggan dalam segmen ini.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<!-- Sertakan file JS yang baru kita buat -->
-<script src="{{ url_for('static', filename='js/dataTables-init.js') }}"></script>
-
+<div class="card shadow">
+  <div class="card-header py-3 bg-white">
+    <h6 class="m-0 fw-bold text-warning">
+      <i class="fas fa-history me-2"></i>Riwayat Klaim Diskon
+    </h6>
+  </div>
+  <div class="card-body p-0">
+    {% if discount_history %}
+    <div class="table-responsive">
+      <table class="table table-sm table-striped mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">Tanggal</th>
+            <th>Pelanggan</th>
+            <th class="text-end pe-3">Nilai Diskon</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in discount_history %}
+          <tr>
+            <td class="ps-3">{{ tx.created_at.strftime('%d/%m %H:%M') }}</td>
+            <td>{{ tx.customer.name | truncate(15) }}</td>
+            <td class="text-end pe-3 text-success fw-bold">
+              {{ tx.discount_amount | rp }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="p-2 text-center bg-light border-top">
+      <small class="text-muted">Menampilkan 20 klaim terakhir</small>
+    </div>
+    {% else %}
+    <div class="p-4 text-center text-muted">
+      <i class="fas fa-tag fa-2x mb-2 text-gray-300"></i>
+      <p class="small mb-0">Belum ada diskon yang digunakan oleh segmen ini.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {% block scripts %}
 <script>
-    $(document).ready(function() {
-        // Inisialisasi DataTable untuk tabel pelanggan di segmen
-        initializeDataTable('segmentCustomersTable', {
-            pageLength: 25,
-            order: [[1, 'asc']]
-        });
+  $(document).ready(function () {
+    var tooltipTriggerList = [].slice.call(
+      document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+  });
 </script>
 {% endblock %}

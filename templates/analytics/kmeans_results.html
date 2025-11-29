@@ -1,0 +1,176 @@
+{% extends "layout.html" %} {% block page_title %}Hasil Analisis K-Means{%
+endblock %} {% block content %}
+<div
+  class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+>
+  <h1 class="h2">Detail Hasil Clustering</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <div class="btn-group me-2">
+      <a
+        href="{{ url_for('analytics.dashboard') }}"
+        class="btn btn-sm btn-outline-secondary"
+      >
+        <i class="fas fa-arrow-left me-1"></i> Dashboard
+      </a>
+      <a
+        href="{{ url_for('analytics.run_kmeans') }}"
+        class="btn btn-sm btn-primary"
+      >
+        <i class="fas fa-sync-alt me-1"></i> Analisis Ulang
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow mb-4 border-left-primary">
+  <div class="card-header py-3 bg-white">
+    <h6 class="m-0 fw-bold text-primary">
+      <i class="fas fa-chart-pie me-1"></i> Ringkasan Statistik Segmen
+    </h6>
+  </div>
+  <div class="card-body">
+    {% if summary_stats %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead class="table-primary">
+          <tr class="text-center">
+            <th>Segmen Pelanggan</th>
+            <th>Jumlah User</th>
+            <th>Rata-rata Recency</th>
+            <th>Rata-rata Frequency</th>
+            <th>Rata-rata Monetary</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stat in summary_stats %}
+          <tr>
+            <td>
+              <span
+                class="badge rounded-pill fs-6"
+                style="background-color: {{ stat.color }};"
+              >
+                {{ stat.segment_name }}
+              </span>
+            </td>
+            <td class="text-center fw-bold">{{ stat.count }} Orang</td>
+
+            <td class="text-center">
+              {% if stat.avg_recency == -1 %}
+              <span class="text-muted">-</span>
+              {% else %} {{ "{:,.0f}".format(stat.avg_recency) }} Hari {% endif
+              %}
+            </td>
+
+            <td class="text-center">
+              {{ "{:,.1f}".format(stat.avg_frequency) }} x
+            </td>
+            <td class="text-end fw-bold text-success">
+              {{ stat.avg_monetary | rp }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center">Data ringkasan belum tersedia.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3 bg-white">
+    <h6 class="m-0 fw-bold text-secondary">
+      <i class="fas fa-table me-1"></i> Detail Per Pelanggan
+    </h6>
+  </div>
+  <div class="card-body">
+    {% if results %}
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-striped table-hover align-middle"
+        id="kmeansResultsTable"
+        width="100%"
+      >
+        <thead class="table-light">
+          <tr>
+            <th class="text-center">ID</th>
+            <th>Nama Pelanggan</th>
+            <th class="text-center">Recency (Hari)</th>
+            <th class="text-center">Freq (x)</th>
+            <th class="text-end">Monetary (Total)</th>
+            <th class="text-center">Segmen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for customer in results %}
+          <tr>
+            <td class="text-center">{{ customer.customer_id }}</td>
+            <td class="fw-bold">{{ customer.customer_name }}</td>
+            <td class="text-center">
+              {% if customer.recency == -1 %}
+              <span class="badge bg-light text-dark border">-</span>
+              {% else %} {{ customer.recency | int }} {% endif %}
+            </td>
+            <td class="text-center">{{ customer.frequency }}</td>
+            <td class="text-end text-success fw-bold">
+              {{ customer.monetary | rp }}
+            </td>
+            <td class="text-center">
+              <span
+                class="badge rounded-pill px-3"
+                style="background-color: {{ customer.color }};"
+              >
+                {{ customer.segment_name }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-clipboard-list fa-4x text-gray-300 mb-3"></i>
+      <h5>Belum Ada Hasil Analisis</h5>
+      <p class="text-muted mb-4">
+        Database belum memiliki hasil segmentasi. Silakan jalankan proses
+        K-Means terlebih dahulu.
+      </p>
+      <a href="{{ url_for('analytics.run_kmeans') }}" class="btn btn-primary">
+        <i class="fas fa-play me-2"></i> Jalankan K-Means
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function () {
+    var table = $("#kmeansResultsTable").DataTable({
+      responsive: true,
+      pageLength: 25,
+      lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, "Semua"],
+      ],
+      language: {
+        url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json",
+      },
+      dom: '<"row mb-3"<"col-md-6"B><"col-md-6"f>>rt<"row"<"col-md-6"i><"col-md-6"p>>',
+      buttons: [
+        {
+          extend: "excelHtml5",
+          className: "btn btn-success btn-sm",
+          title: "Hasil Segmentasi",
+        },
+        {
+          extend: "csvHtml5",
+          className: "btn btn-primary btn-sm",
+          title: "Hasil Segmentasi",
+        },
+      ],
+    });
+  });
+</script>
+{% endblock %}

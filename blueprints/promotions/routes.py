@@ -1,19 +1,19 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required
 from blueprints.promotions import bp
-from blueprints.promotions.forms import PromotionForm
+# Import dari folder forms yang benar
+from forms.promotions import PromotionForm
 from models.analytics import CustomerSegment, Promotion
 from app import db
 from utils.decorators import admin_required
+from sqlalchemy.orm import joinedload
 
 @bp.route('/')
 @admin_required
 @login_required
 def list_promotions():
-    # Join untuk mendapatkan nama segmen
-    promotions = db.session.query(Promotion, CustomerSegment)\
-        .join(CustomerSegment.promotion)\
-        .all()
+    # Optimasi Query: Eager load 'segment' agar tidak N+1 query di template
+    promotions = Promotion.query.options(joinedload(Promotion.segment)).all()
     
     return render_template('promotions/list.html', promotions=promotions)
 
@@ -28,10 +28,13 @@ def add_promotion():
     form.segment_id.choices = [(s.id, s.segment_name) for s in segments]
     
     if form.validate_on_submit():
-        # Periksa apakah segmen sudah memiliki promosi
+        # Cek duplikat: Satu segmen hanya boleh punya satu promosi aktif
         existing_promotion = Promotion.query.filter_by(segment_id=form.segment_id.data).first()
+        
         if existing_promotion:
-            flash(f'Segmen "{segments[form.segment_id.data-1].segment_name}" sudah memiliki promosi.', 'warning')
+            # Cari nama segmen yang benar berdasarkan ID (jangan pakai index list)
+            seg_name = next((s.segment_name for s in segments if s.id == form.segment_id.data), 'Terpilih')
+            flash(f'Segmen "{seg_name}" sudah memiliki promosi. Hapus atau edit yang lama.', 'warning')
             return render_template('promotions/form.html', form=form, title='Tambah Promosi')
         
         promotion = Promotion(
@@ -54,18 +57,19 @@ def edit_promotion(id):
     promotion = Promotion.query.get_or_404(id)
     form = PromotionForm(obj=promotion)
     
-    # Isi pilihan segmen
     segments = CustomerSegment.query.all()
     form.segment_id.choices = [(s.id, s.segment_name) for s in segments]
     
     if form.validate_on_submit():
-        # Periksa apakah segmen sudah memiliki promosi (dari promosi lain)
+        # Cek duplikat (kecuali diri sendiri)
         existing_promotion = Promotion.query.filter(
             Promotion.segment_id == form.segment_id.data,
             Promotion.id != id
         ).first()
+        
         if existing_promotion:
-            flash(f'Segmen "{segments[form.segment_id.data-1].segment_name}" sudah memiliki promosi lain.', 'warning')
+            seg_name = next((s.segment_name for s in segments if s.id == form.segment_id.data), 'Terpilih')
+            flash(f'Segmen "{seg_name}" sudah memiliki promosi lain.', 'warning')
             return render_template('promotions/form.html', form=form, title='Edit Promosi')
         
         promotion.segment_id = form.segment_id.data
@@ -84,21 +88,23 @@ def edit_promotion(id):
 @login_required
 def delete_promotion(id):
     promotion = Promotion.query.get_or_404(id)
-    segment_name = promotion.segment.segment_name
+    # Simpan nama segmen untuk pesan flash sebelum dihapus
+    segment_name = promotion.segment.segment_name if promotion.segment else "Unknown"
+    
     db.session.delete(promotion)
     db.session.commit()
     flash(f'Promosi untuk segmen "{segment_name}" berhasil dihapus.', 'success')
     return redirect(url_for('promotions.list_promotions'))
 
-# API untuk mendapatkan detail promosi (opsional, untuk referensi)
 @bp.route('/api/<int:id>')
 @admin_required
 @login_required
 def api_promotion_detail(id):
     promotion = Promotion.query.get_or_404(id)
     return jsonify({
-        'segment_name': promotion.segment.segment_name,
+        'id': promotion.id,
+        'segment_name': promotion.segment.segment_name if promotion.segment else '-',
         'promotion_type': promotion.promotion_type,
-        'promotion_value': promotion.promotion_value,
+        'promotion_value': float(promotion.promotion_value), # Convert Decimal to float for JSON
         'description': promotion.description
     })

@@ -1,244 +1,380 @@
-{% extends "layout.html" %}
-
-{% block page_title %}Analitik Pelanggan{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-    <h1 class="h2"></h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a href="{{ url_for('analytics.run_kmeans') }}" class="btn btn-sm btn-primary">
-                <i class="fas fa-play me-1"></i> Jalankan K-Means
-            </a>
-        </div>
+{% extends "layout.html" %} {% block page_title %}Dashboard Analitik Pelanggan{%
+endblock %} {% block content %}
+<div
+  class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3"
+>
+  <h1 class="h2">Ringkasan Segmentasi</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <div class="btn-group me-2">
+      <a
+        href="{{ url_for('analytics.run_kmeans') }}"
+        class="btn btn-sm btn-primary shadow-sm"
+      >
+        <i class="fas fa-sync-alt me-1"></i> Jalankan Ulang K-Means
+      </a>
+      <a
+        href="{{ url_for('analytics.kmeans_results') }}"
+        class="btn btn-sm btn-outline-secondary shadow-sm"
+      >
+        <i class="fas fa-table me-1"></i> Lihat Data Detail
+      </a>
     </div>
+  </div>
 </div>
 
 <div class="row">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Distribusi Segmen Pelanggan</h6>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="position: relative; height: 400px;">
-                    <canvas id="segmentChart"></canvas>
-                    <div id="segmentChartError" class="text-center text-muted" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <p>Belum ada data segmen. Silakan jalankan analisis K-Means terlebih dahulu.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
+      >
+        <h6 class="m-0 fw-bold text-primary">
+          Distribusi Pelanggan per Segmen
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 350px">
+          <canvas id="segmentChart"></canvas>
 
-    <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Segmen Pelanggan</h6>
+          <div
+            id="segmentChartLoading"
+            class="text-center position-absolute top-50 start-50 translate-middle"
+          >
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
             </div>
-            <div class="card-body">
-                {% if segment_stats %}
-                <div class="list-group">
-                    {% for segment in segment_stats %}
-                    <a href="{{ url_for('analytics.segment_detail', id=segment.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">
-                                <span class="badge me-1" style="background-color: {{ segment.color }};">
-                                    {{ segment.name }}
-                                </span>
-                            </h6>
-                            <span class="badge bg-primary rounded-pill">{{ segment.customer_count }}</span>
-                        </div>
-                        <p class="mb-1">{{ segment.description }}</p>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p>Belum ada data segmen. <a href="{{ url_for('analytics.run_kmeans') }}">Jalankan analisis K-Means</a> untuk membuat segmen.</p>
-                {% endif %}
-            </div>
+          </div>
+
+          <div
+            id="segmentChartError"
+            class="text-center text-muted"
+            style="
+              display: none;
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+            "
+          >
+            <i class="fas fa-chart-pie fa-3x mb-3 text-gray-300"></i>
+            <p>
+              Belum ada data segmen.<br />Silakan jalankan analisis K-Means.
+            </p>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 fw-bold text-primary">Detail Segmen</h6>
+      </div>
+      <div class="card-body p-0">
+        {% if segment_stats %}
+        <div class="list-group list-group-flush">
+          {% for segment in segment_stats %}
+          <a
+            href="{{ url_for('analytics.segment_detail', id=segment.id) }}"
+            class="list-group-item list-group-item-action border-left-primary"
+          >
+            <div
+              class="d-flex w-100 justify-content-between align-items-center mb-1"
+            >
+              <h6 class="mb-0 fw-bold" style="color: {{ segment.color }};">
+                <i class="fas fa-circle fa-xs me-2"></i>{{ segment.name }}
+              </h6>
+              <span class="badge rounded-pill bg-light text-dark border"
+                >{{ segment.customer_count }} User</span
+              >
+            </div>
+            <p class="mb-1 small text-muted">
+              {{ segment.description | truncate(60) }}
+            </p>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-4 text-center">
+          <p class="text-muted mb-3">Belum ada segmen terbentuk.</p>
+          <a
+            href="{{ url_for('analytics.run_kmeans') }}"
+            class="btn btn-primary btn-sm"
+            >Mulai Analisis</a
+          >
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="row">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Visualisasi RFM</h6>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="position: relative; height: 400px;">
-                    <canvas id="rfmChart"></canvas>
-                    <div id="rfmChartError" class="text-center text-muted" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <p>Belum ada data transaksi untuk divisualisasikan.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 fw-bold text-primary">Peta Sebaran Pelanggan (RFM)</h6>
+      </div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">
+          <i class="fas fa-info-circle me-1"></i>
+          Sumbu X: Frekuensi Belanja | Sumbu Y: Total Uang | Ukuran Lingkaran:
+          Kebaruan (Makin besar = Baru belanja)
+        </p>
+        <div class="chart-container" style="position: relative; height: 450px">
+          <canvas id="rfmChart"></canvas>
 
-    <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Tentang Analisis RFM</h6>
+          <div
+            id="rfmChartLoading"
+            class="text-center position-absolute top-50 start-50 translate-middle"
+          >
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
             </div>
-            <div class="card-body">
-                <p>Analisis RFM adalah metode yang digunakan untuk menganalisis perilaku pelanggan berdasarkan tiga faktor:</p>
-                <ul>
-                    <li><strong>Recency:</strong> Seberapa baru pelanggan melakukan pembelian</li>
-                    <li><strong>Frequency:</strong> Seberapa sering pelanggan melakukan pembelian</li>
-                    <li><strong>Monetary:</strong> Berapa banyak uang yang dihabiskan pelanggan</li>
-                </ul>
-                <p>Dengan menggunakan algoritma K-Means, pelanggan dikelompokkan ke dalam segmen yang berbeda berdasarkan pola pembelian mereka.</p>
-            </div>
+          </div>
+
+          <div
+            id="rfmChartError"
+            class="text-center text-muted"
+            style="
+              display: none;
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+            "
+          >
+            <i class="fas fa-chart-area fa-3x mb-3 text-gray-300"></i>
+            <p>Data transaksi tidak cukup untuk visualisasi.</p>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 fw-bold text-primary">Panduan RFM</h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <h6 class="fw-bold text-success">
+            <i class="fas fa-clock me-2"></i>Recency (R)
+          </h6>
+          <p class="small text-muted">
+            Kapan terakhir pelanggan belanja. Semakin baru (angka kecil),
+            semakin baik.
+          </p>
+        </div>
+        <div class="mb-3">
+          <h6 class="fw-bold text-info">
+            <i class="fas fa-sync me-2"></i>Frequency (F)
+          </h6>
+          <p class="small text-muted">
+            Seberapa sering pelanggan bertransaksi. Semakin tinggi, semakin
+            loyal.
+          </p>
+        </div>
+        <div class="mb-3">
+          <h6 class="fw-bold text-warning">
+            <i class="fas fa-coins me-2"></i>Monetary (M)
+          </h6>
+          <p class="small text-muted">
+            Total uang yang dikeluarkan. Semakin besar, semakin berharga
+            pelanggan tersebut (Whale/VIP).
+          </p>
+        </div>
+        <hr />
+        <div class="alert alert-info small mb-0">
+          <strong>Tips:</strong> Fokuskan promosi pada segmen dengan
+          <em>Monetary</em> tinggi tapi <em>Recency</em> buruk (sudah lama tidak
+          belanja) untuk mengajak mereka kembali ("Win-back strategy").
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-    $(document).ready(function() {
-        // Load segment data
-        $.ajax({
-            url: '/analytics/api/segment-data',
-            method: 'GET',
-            success: function(data) {
-                if (data.length > 0) {
-                    // Create segment chart
-                    const segmentCtx = document.getElementById('segmentChart').getContext('2d');
-                    new Chart(segmentCtx, {
-                        type: 'pie',
-                        data: {
-                            labels: data.map(item => item.name),
-                            datasets: [{
-                                data: data.map(item => item.count),
-                                backgroundColor: data.map(item => item.color),
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const label = context.label || '';
-                                            const value = context.raw || 0;
-                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                            const percentage = Math.round((value / total) * 100);
-                                            return `${label}: ${value} (${percentage}%)`;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } else {
-                    // No data, show error message
-                    $('#segmentChart').hide();
-                    $('#segmentChartError').show();
-                }
+  // Formatter Rupiah untuk Tooltip JS
+  const rupiahFormatter = new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  });
+
+  $(document).ready(function () {
+    // --- 1. Load Segment Data (Doughnut Chart) ---
+    $.ajax({
+      url: "/analytics/api/segment-data",
+      method: "GET",
+      success: function (data) {
+        $("#segmentChartLoading").hide(); // Hide spinner
+
+        if (data.length > 0) {
+          const segmentCtx = document
+            .getElementById("segmentChart")
+            .getContext("2d");
+          new Chart(segmentCtx, {
+            type: "doughnut", // Lebih modern daripada Pie
+            data: {
+              labels: data.map((item) => item.name),
+              datasets: [
+                {
+                  data: data.map((item) => item.count),
+                  backgroundColor: data.map((item) => item.color),
+                  borderWidth: 2,
+                  hoverOffset: 4,
+                },
+              ],
             },
-            error: function() {
-                console.error('Failed to load segment data');
-                $('#segmentChart').hide();
-                $('#segmentChartError').find('p').text('Gagal memuat data segmen. Silakan refresh halaman.');
-                $('#segmentChartError').show();
-            }
-        });
-        
-        // Load RFM data
-        $.ajax({
-            url: '/analytics/api/rfm-data',
-            method: 'GET',
-            success: function(data) {
-                if (data.length > 0 && !data.error) {
-                    // Group data by segment
-                    const segments = {};
-                    data.forEach(item => {
-                        if (!segments[item.segment_name]) {
-                            segments[item.segment_name] = {
-                                label: item.segment_name,
-                                data: [],
-                                backgroundColor: item.color,
-                                borderColor: item.color,
-                                borderWidth: 1,
-                                pointRadius: 5,
-                                pointHoverRadius: 7
-                            };
-                        }
-                        
-                        segments[item.segment_name].data.push({
-                            x: item.frequency,
-                            y: item.monetary,
-                            r: Math.max(5, Math.min(20, 30 - item.recency / 10))
-                        });
-                    });
-                    
-                    const rfmCtx = document.getElementById('rfmChart').getContext('2d');
-                    new Chart(rfmCtx, {
-                        type: 'bubble',
-                        data: {
-                            datasets: Object.values(segments)
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Frequency (Jumlah Transaksi)'
-                                    }
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: 'Monetary (Total Pembelian)'
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            const item = data[context.dataIndex];
-                                            return [
-                                                `Segment: ${item.segment_name}`,
-                                                `Frequency: ${item.frequency}`,
-                                                `Monetary: Rp ${item.monetary.toLocaleString('id-ID')}`,
-                                                `Recency: ${item.recency} hari`
-                                            ];
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } else {
-                    // No data, show error message
-                    $('#rfmChart').hide();
-                    $('#rfmChartError').show();
-                }
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  labels: { usePointStyle: true, padding: 20 },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const label = context.label || "";
+                      const value = context.raw || 0;
+                      const total = context.dataset.data.reduce(
+                        (a, b) => a + b,
+                        0
+                      );
+                      const percentage = Math.round((value / total) * 100);
+                      return ` ${label}: ${value} Orang (${percentage}%)`;
+                    },
+                  },
+                },
+              },
+              layout: { padding: 20 },
             },
-            error: function() {
-                console.error('Failed to load RFM data');
-                $('#rfmChart').hide();
-                $('#rfmChartError').find('p').text('Gagal memuat data RFM. Silakan refresh halaman.');
-                $('#rfmChartError').show();
-            }
-        });
+          });
+        } else {
+          $("#segmentChart").hide();
+          $("#segmentChartError").show();
+        }
+      },
+      error: function () {
+        $("#segmentChartLoading").hide();
+        $("#segmentChart").hide();
+        $("#segmentChartError").show();
+      },
     });
+
+    // --- 2. Load RFM Data (Bubble Chart) ---
+    $.ajax({
+      url: "/analytics/api/rfm-data",
+      method: "GET",
+      success: function (data) {
+        $("#rfmChartLoading").hide();
+
+        if (data.length > 0 && !data.error) {
+          // Group data by segment name untuk membuat dataset terpisah (beda warna)
+          const segments = {};
+
+          data.forEach((item) => {
+            const segName = item.segment_name;
+
+            if (!segments[segName]) {
+              segments[segName] = {
+                label: segName,
+                data: [],
+                backgroundColor: item.color, // Warna transparan
+                borderColor: item.color,
+                borderWidth: 1,
+                hoverBackgroundColor: item.color,
+                hoverBorderWidth: 2,
+              };
+            }
+
+            // Hitung Radius:
+            // Recency kecil (baru belanja) -> Radius Besar (max 25)
+            // Recency besar (lama ga belanja) -> Radius Kecil (min 5)
+            let radius = Math.max(5, 25 - item.recency / 10);
+
+            segments[segName].data.push({
+              x: item.frequency,
+              y: item.monetary,
+              r: radius,
+              // Simpan data kustom untuk Tooltip
+              _customerName: item.name || "Pelanggan #" + item.customer_id,
+              _monetary: item.monetary,
+              _recency: item.recency,
+            });
+          });
+
+          const rfmCtx = document.getElementById("rfmChart").getContext("2d");
+          new Chart(rfmCtx, {
+            type: "bubble",
+            data: {
+              datasets: Object.values(segments),
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  title: { display: true, text: "Frekuensi Transaksi (Kali)" },
+                  beginAtZero: true,
+                },
+                y: {
+                  title: { display: true, text: "Total Belanja (Rupiah)" },
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function (value) {
+                      return "Rp " + value / 1000 + "k"; // Singkat sumbu Y
+                    },
+                  },
+                },
+              },
+              plugins: {
+                legend: {
+                  position: "top",
+                  align: "end",
+                  labels: { usePointStyle: true },
+                },
+                tooltip: {
+                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  titleColor: "#333",
+                  bodyColor: "#666",
+                  borderColor: "#ddd",
+                  borderWidth: 1,
+                  padding: 10,
+                  displayColors: true,
+                  callbacks: {
+                    // Custom Tooltip agar informatif
+                    label: function (context) {
+                      const raw = context.raw;
+                      return [
+                        ` ${raw._customerName}`, // Nama
+                        ` Total: ${rupiahFormatter.format(raw._monetary)}`, // Uang
+                        ` Frekuensi: ${raw.x}x Transaksi`,
+                        ` Terakhir: ${raw._recency} hari lalu`,
+                      ];
+                    },
+                  },
+                },
+              },
+            },
+          });
+        } else {
+          $("#rfmChart").hide();
+          $("#rfmChartError").show();
+        }
+      },
+      error: function () {
+        $("#rfmChartLoading").hide();
+        $("#rfmChart").hide();
+        $("#rfmChartError").show();
+      },
+    });
+  });
 </script>
 {% endblock %}

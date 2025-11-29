@@ -1,7 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
-from models.user import User
+from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -10,20 +9,30 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    password2 = PasswordField(
-        'Ulangi Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('admin', 'Admin'), ('cashier', 'Kasir')], default='cashier')
+    username = StringField('Username', validators=[
+        DataRequired(), 
+        Length(min=4, max=64, message="Username minimal 4 karakter")
+    ])
+    email = StringField('Email', validators=[
+        DataRequired(), 
+        Email(message="Format email tidak valid")
+    ])
+    password = PasswordField('Password', validators=[
+        DataRequired(), 
+        Length(min=6, message="Password minimal 6 karakter")
+    ])
+    confirm_password = PasswordField('Ulangi Password', validators=[
+        DataRequired(), 
+        EqualTo('password', message='Password harus sama')
+    ])
+    
+    # Role sesuai dengan decorator @role_required di routes
+    role = SelectField('Role', choices=[
+        ('cashier', 'Kasir'),
+        ('admin', 'Admin')
+    ], default='cashier')
+    
     submit = SubmitField('Daftar')
     
-    def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user is not None:
-            raise ValidationError('Username sudah digunakan.')
-    
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError('Email sudah digunakan.')
+    # Catatan: Validasi username/email duplikat sudah ditangani di routes.py 
+    # agar pesan error bisa lebih fleksibel (Flash Message).

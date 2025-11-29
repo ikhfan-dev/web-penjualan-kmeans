@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import flash, redirect, url_for
+from flask import flash, redirect, url_for, request
 from flask_login import current_user
 
 def role_required(*roles):
@@ -10,15 +10,24 @@ def role_required(*roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated or current_user.role not in roles:
-                flash('Anda tidak memiliki izin untuk mengakses halaman ini.', 'danger')
-                return redirect(url_for('sales.dashboard')) # Aman untuk di-redirect ke dashboard
+            # 1. Cek apakah user sudah login?
+            if not current_user.is_authenticated:
+                flash('Silakan login untuk mengakses halaman ini.', 'warning')
+                # Arahkan ke login, simpan halaman tujuan di parameter 'next'
+                return redirect(url_for('auth.login', next=request.path))
+            
+            # 2. Cek apakah role user sesuai?
+            if current_user.role not in roles:
+                flash('Akses Ditolak: Anda tidak memiliki izin untuk halaman ini.', 'danger')
+                # Jika dia admin/kasir yang nyasar, kembalikan ke dashboard utama
+                return redirect(url_for('sales.dashboard'))
+            
             return f(*args, **kwargs)
         return decorated_function
     return decorator
 
 def admin_required(f):
     """
-    Decorator khusus untuk role 'admin'.
+    Decorator shortcut khusus untuk role 'admin'.
     """
     return role_required('admin')(f)

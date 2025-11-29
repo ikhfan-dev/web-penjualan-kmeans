@@ -1,74 +1,184 @@
-{% extends "layout.html" %}
-
-{% block page_title %}Riwayat Transaksi - {{ customer.name }}{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-    <h1 class="h2"></h1>
-    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-secondary btn-sm me-2">
-        <i class="fas fa-arrow-left"></i> Kembali
+{% extends "layout.html" %} {% block page_title %}Riwayat: {{ customer.name }}{%
+endblock %} {% block content %}
+<div
+  class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+>
+  <div>
+    <h1 class="h2">Riwayat Transaksi</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a href="{{ url_for('customers.list_customers') }}">Pelanggan</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ customer.name }}
+        </li>
+      </ol>
+    </nav>
+  </div>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <a
+      href="{{ url_for('customers.list_customers') }}"
+      class="btn btn-sm btn-secondary"
+    >
+      <i class="fas fa-arrow-left me-1"></i> Kembali ke List
     </a>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm border-left-primary">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <div
+              class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+              style="width: 50px; height: 50px"
+            >
+              <i class="fas fa-user fa-lg"></i>
+            </div>
+          </div>
+          <div class="col">
+            <h5 class="font-weight-bold text-primary mb-1">
+              {{ customer.name }}
+            </h5>
+            <div class="text-muted small">
+              <i class="fas fa-phone me-1"></i> {{ customer.phone or '-' }}
+              &nbsp;|&nbsp; <i class="fas fa-envelope me-1"></i> {{
+              customer.email or '-' }}
+            </div>
+            <div class="text-muted small mt-1">
+              <i class="fas fa-map-marker-alt me-1"></i> {{ customer.address or
+              'Alamat tidak tersedia' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Daftar Transaksi</h6>
-        <div>
-            <span class="badge bg-primary rounded-pill">{{ transactions|length }} Transaksi</span>
-        </div>
+  <div
+    class="card-header py-3 d-flex justify-content-between align-items-center bg-white"
+  >
+    <h6 class="m-0 font-weight-bold text-primary">
+      Daftar Transaksi ({{ transactions.total }})
+    </h6>
+  </div>
+  <div class="card-body">
+    {% if transactions.items %}
+    <div class="table-responsive">
+      <table
+        class="table table-hover align-middle"
+        width="100%"
+        cellspacing="0"
+      >
+        <thead class="table-light">
+          <tr>
+            <th>ID Transaksi</th>
+            <th>Waktu Transaksi</th>
+            <th>Metode Bayar</th>
+            <th class="text-end">Total Belanja</th>
+            <th class="text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for transaction in transactions.items %}
+          <tr>
+            <td>#{{ transaction.id }}</td>
+            <td>
+              <div>{{ transaction.created_at.strftime('%d/%m/%Y') }}</div>
+              <small class="text-muted"
+                >{{ transaction.created_at.strftime('%H:%M WIB') }}</small
+              >
+            </td>
+            <td>
+              {% if transaction.payment_method == 'cash' %}
+              <span class="badge bg-success"
+                ><i class="fas fa-money-bill-wave me-1"></i> Tunai</span
+              >
+              {% elif transaction.payment_method == 'card' %}
+              <span class="badge bg-info text-dark"
+                ><i class="far fa-credit-card me-1"></i> Kartu</span
+              >
+              {% elif transaction.payment_method == 'qris' %}
+              <span class="badge bg-warning text-dark"
+                ><i class="fas fa-qrcode me-1"></i> QRIS</span
+              >
+              {% else %}
+              <span class="badge bg-secondary"
+                >{{ transaction.payment_method }}</span
+              >
+              {% endif %}
+            </td>
+            <td class="text-end fw-bold">
+              {{ transaction.total_amount | rp }}
+            </td>
+            <td class="text-center table-actions">
+              <a
+                href="{{ url_for('sales.transaction_detail', id=transaction.id) }}"
+                class="btn btn-sm btn-outline-info"
+                title="Lihat Struk"
+              >
+                <i class="fas fa-eye"></i> Detail
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body">
-        {% if transactions %}
-        <div class="table-responsive">
-            <table class="table table-bordered" id="transactionsTable" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>ID Transaksi</th>
-                        <th>Tanggal</th>
-                        <th>Total</th>
-                        <th>Metode Pembayaran</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for transaction in transactions %}
-                    <tr>
-                        <td>{{ transaction.id }}</td>
-                        <td>{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td>Rp {{ "{:,.0f}".format(transaction.total_amount) }}</td>
-                        <td>
-                            {% if transaction.payment_method == 'cash' %}
-                                <span class="badge bg-success">Tunai</span>
-                            {% elif transaction.payment_method == 'card' %}
-                                <span class="badge bg-info">Kartu</span>
-                            {% else %}
-                                <span class="badge bg-warning">Transfer</span>
-                            {% endif %}
-                        </td>
-                        <td class="table-actions">
-                            <a href="{{ url_for('sales.transaction_detail', id=transaction.id) }}" class="btn btn-sm btn-info" title="Lihat Detail">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p>Pelanggan <strong>{{ customer.name }}</strong> belum pernah melakukan transaksi.</p>
-        {% endif %}
-    </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-<script>
-    $(document).ready(function() {
-        $('#transactionsTable').DataTable({
-            responsive: true,
-            order: [[1, 'desc']] // Urutkan default berdasarkan kolom Tanggal (indeks 1) secara descending
-        });
-    });
-</script>
-{% endblock %}
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li
+          class="page-item {% if not transactions.has_prev %}disabled{% endif %}"
+        >
+          <a
+            class="page-link"
+            href="{{ url_for('customers.customer_transactions', customer_id=customer.id, page=transactions.prev_num) }}"
+            >Previous</a
+          >
+        </li>
+
+        {% for page_num in transactions.iter_pages(left_edge=1, right_edge=1,
+        left_current=1, right_current=2) %} {% if page_num %}
+        <li
+          class="page-item {% if page_num == transactions.page %}active{% endif %}"
+        >
+          <a
+            class="page-link"
+            href="{{ url_for('customers.customer_transactions', customer_id=customer.id, page=page_num) }}"
+            >{{ page_num }}</a
+          >
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %} {% endfor %}
+
+        <li
+          class="page-item {% if not transactions.has_next %}disabled{% endif %}"
+        >
+          <a
+            class="page-link"
+            href="{{ url_for('customers.customer_transactions', customer_id=customer.id, page=transactions.next_num) }}"
+            >Next</a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="fas fa-shopping-basket fa-3x mb-3 text-gray-300"></i>
+      <p>Pelanggan ini belum memiliki riwayat transaksi.</p>
+      <a href="{{ url_for('sales.pos') }}" class="btn btn-primary btn-sm"
+        >Buat Transaksi Baru</a
+      >
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {% block scripts %} {% endblock %}

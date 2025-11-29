@@ -10,9 +10,10 @@ class Customer(db.Model):
     email = db.Column(db.String(120))
     address = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relasi dengan transaksi
-    transactions = db.relationship('Transaction', backref='customer', lazy='dynamic')
+
+    # CATATAN: 
+    # Relasi 'transactions' sudah otomatis ada karena backref di model Transaction
+    # Relasi 'segment_memberships' sudah otomatis ada karena backref di model CustomerSegmentMembership
     
     def __repr__(self):
         return f'<Customer {self.name}>'

@@ -3,24 +3,37 @@ from flask_login import login_user, logout_user, login_required, current_user
 from blueprints.auth import bp
 from models.user import User
 from app import db
-from forms.auth import LoginForm, RegistrationForm
+# Pastikan file forms/auth.py sudah dibuat seperti di atas
+from forms.auth import LoginForm, RegistrationForm 
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        # Redirect cerdas berdasarkan role jika user refresh halaman login
+        if current_user.role == 'admin':
+            return redirect(url_for('analytics.dashboard'))
         return redirect(url_for('sales.dashboard'))
     
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
+        
+        # Cek user dan password
         if user is None or not user.check_password(form.password.data):
             flash('Username atau password salah', 'danger')
             return redirect(url_for('auth.login'))
         
         login_user(user, remember=form.remember_me.data)
+        
+        # Handle "Next" argument untuk redirect kembali ke halaman sebelumnya
         next_page = request.args.get('next')
         if not next_page or not next_page.startswith('/'):
-            next_page = url_for('sales.dashboard')
+            # LOGIC BARU: Arahkan sesuai Role
+            if user.role == 'admin':
+                next_page = url_for('analytics.dashboard')
+            else:
+                next_page = url_for('sales.dashboard')
+                
         return redirect(next_page)
     
     return render_template('login.html', title='Login', form=form)
@@ -28,6 +41,7 @@ def login():
 @bp.route('/logout')
 def logout():
     logout_user()
+    flash('Anda telah logout.', 'info')
     return redirect(url_for('auth.login'))
 
 @bp.route('/register', methods=['GET', 'POST'])
@@ -37,12 +51,18 @@ def register():
     
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        user.role = form.role.data
-        db.session.add(user)
-        db.session.commit()
-        flash('Registrasi berhasil! Silakan login.', 'success')
-        return redirect(url_for('auth.login'))
+        try:
+            user = User(username=form.username.data, email=form.email.data)
+            user.set_password(form.password.data)
+            user.role = form.role.data
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            flash('Registrasi berhasil! Silakan login.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Terjadi kesalahan saat registrasi: {str(e)}', 'danger')
     
     return render_template('register.html', title='Register', form=form)

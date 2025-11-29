@@ -1,76 +1,92 @@
-{% extends "layout.html" %}
-
-{% block page_title %}{{ title }}{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block page_title %}{{ title }}{% endblock %} {%
+block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div
+        class="card-header py-3 d-flex align-items-center justify-content-between bg-white"
+      >
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-user-edit me-2"></i>{{ title }}
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            {{ form.name.label(class="form-label fw-bold") }}
+            <span class="text-danger">*</span>
+            {% if form.name.errors %} {{ form.name(class="form-control
+            is-invalid", placeholder="Contoh: Budi Santoso") }}
+            <div class="invalid-feedback">
+              {% for error in form.name.errors %} {{ error }} {% endfor %}
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        {{ form.name.label(class="form-label") }}
-                        {{ form.name(class="form-control") }}
-                        {% if form.name.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.name.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            {{ form.phone.label(class="form-label") }}
-                            {{ form.phone(class="form-control") }}
-                            {% if form.phone.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.phone.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control") }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.email.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.address.label(class="form-label") }}
-                        {{ form.address(class="form-control", rows="3") }}
-                        {% if form.address.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.address.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Kembali
-                        </a>
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
+            {% else %} {{ form.name(class="form-control", placeholder="Contoh:
+            Budi Santoso") }} {% endif %}
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.phone.label(class="form-label fw-bold") }}
+              <span class="text-danger">*</span>
+              {% if form.phone.errors %} {{ form.phone(class="form-control
+              is-invalid", placeholder="08123456789") }}
+              <div class="invalid-feedback">
+                {% for error in form.phone.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.phone(class="form-control",
+              placeholder="08123456789") }} {% endif %}
+              <div class="form-text small text-muted">
+                Nomor WA aktif disarankan.
+              </div>
             </div>
-        </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold"
+                >{{ form.email.label.text }}
+                <small class="text-muted fw-normal">(Opsional)</small></label
+              >
+              {% if form.email.errors %} {{ form.email(class="form-control
+              is-invalid", placeholder="nama@email.com") }}
+              <div class="invalid-feedback">
+                {% for error in form.email.errors %} {{ error }} {% endfor %}
+              </div>
+              {% else %} {{ form.email(class="form-control",
+              placeholder="nama@email.com") }} {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold"
+              >{{ form.address.label.text }}
+              <small class="text-muted fw-normal">(Opsional)</small></label
+            >
+            {% if form.address.errors %} {{ form.address(class="form-control
+            is-invalid", rows="3", placeholder="Alamat lengkap...") }}
+            <div class="invalid-feedback">
+              {% for error in form.address.errors %} {{ error }} {% endfor %}
+            </div>
+            {% else %} {{ form.address(class="form-control", rows="3",
+            placeholder="Alamat lengkap...") }} {% endif %}
+          </div>
+
+          <hr />
+
+          <div class="d-flex justify-content-between">
+            <a
+              href="{{ url_for('customers.list_customers') }}"
+              class="btn btn-secondary"
+            >
+              <i class="fas fa-arrow-left me-1"></i> Batal
+            </a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="fas fa-save me-1"></i> Simpan Data
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

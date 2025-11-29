@@ -6,38 +6,41 @@ from models.product import Product
 from models.transaction import Transaction, TransactionItem
 from models.analytics import CustomerSegment, CustomerSegmentMembership, Promotion
 from app import db
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from decimal import Decimal
+from sqlalchemy import func, desc
+from sqlalchemy.orm import joinedload
 from utils.decorators import role_required
 
 @bp.route('/dashboard')
 @role_required('admin', 'cashier')
 @login_required
 def dashboard():
-    from models.product import Product
-    from models.customer import Customer
-    from models.transaction import Transaction
-    from datetime import datetime, date
-    
-    # Get counts for summary cards
+    # Optimasi: Hitung count via database (lebih cepat daripada len(query.all()))
     products_count = Product.query.count()
     customers_count = Customer.query.count()
     
     today = date.today()
+    # Gunakan func.date untuk kompatibilitas
     today_transactions = Transaction.query.filter(
-        db.func.date(Transaction.created_at) == today
+        func.date(Transaction.created_at) == today
     ).count()
     
-    low_stock_products = Product.query.filter(Product.stock < 10).all()
-    low_stock_count = len(low_stock_products)
+    # Low stock: ambil count-nya saja untuk badge, ambil datanya untuk tabel
+    low_stock_query = Product.query.filter(Product.stock < 10)
+    low_stock_count = low_stock_query.count()
+    low_stock_products = low_stock_query.limit(5).all()
     
-    # Get recent transactions
-    recent_transactions = Transaction.query.order_by(Transaction.created_at.desc()).limit(5).all()
+    # Eager load customer & user untuk mencegah N+1 Query
+    recent_transactions = Transaction.query\
+        .options(joinedload(Transaction.customer), joinedload(Transaction.user))\
+        .order_by(Transaction.created_at.desc())\
+        .limit(5).all()
     
-    # Get top customers by transaction count
+    # Top customers
     top_customers = db.session.query(
-        Customer.id, Customer.name, db.func.count(Transaction.id).label('transaction_count')
-    ).join(Transaction).group_by(Customer.id).order_by(db.desc('transaction_count')).limit(5).all()
+        Customer.id, Customer.name, func.count(Transaction.id).label('transaction_count')
+    ).join(Transaction).group_by(Customer.id).order_by(desc('transaction_count')).limit(5).all()
     
     return render_template('sales/dashboard.html', 
                           products_count=products_count,
@@ -61,12 +64,15 @@ def transactions():
     page = request.args.get('page', 1, type=int)
     date_filter = request.args.get('date', '')
     
-    query = Transaction.query
+    # Eager load relasi agar tabel tidak berat
+    query = Transaction.query.options(joinedload(Transaction.customer), joinedload(Transaction.user))
     
     if date_filter:
         try:
             filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
-            next_day = filter_date.replace(day=filter_date.day + 1) if filter_date.day < 31 else filter_date
+            # PERBAIKAN BUG TANGGAL: Gunakan timedelta
+            next_day = filter_date + timedelta(days=1)
+            
             query = query.filter(
                 Transaction.created_at >= filter_date,
                 Transaction.created_at < next_day
@@ -86,7 +92,12 @@ def transactions():
 @role_required('admin', 'cashier')
 @login_required
 def transaction_detail(id):
-    transaction = Transaction.query.get_or_404(id)
+    # Eager load items dan product untuk detail struk
+    transaction = Transaction.query.options(
+        joinedload(Transaction.items).joinedload(TransactionItem.product),
+        joinedload(Transaction.customer)
+    ).get_or_404(id)
+    
     return render_template('sales/transaction_detail.html', transaction=transaction)
 
 @bp.route('/api/checkout', methods=['POST'])
@@ -98,76 +109,118 @@ def api_checkout():
         return jsonify({'success': False, 'message': 'Data tidak lengkap'}), 400
     
     customer_id = data['customer_id']
-    items = data['items']
+    items = data['items'] # List of {product_id, quantity}
     payment_method = data.get('payment_method', 'cash')
     notes = data.get('notes', '')
-    promotion_type = data.get('promotion_type')
-    promotion_value = data.get('promotion_value')
-    discount_amount = data.get('discount_amount', 0.0)
     
     # Validate customer
     customer = Customer.query.get(customer_id)
     if not customer:
         return jsonify({'success': False, 'message': 'Pelanggan tidak ditemukan'}), 404
     
-    # Create transaction
-    transaction = Transaction(
-        customer_id=customer_id,
-        user_id=current_user.id,
-        payment_method=payment_method,
-        notes=notes,
-        total_amount=0, # Akan dihitung ulang di bawah
-        discount_amount=discount_amount # <-- SIMPAN DISKON
-    )
-    
-    # Add items and calculate total
-    total_amount = Decimal('0')
-    for item in items:
-        product = Product.query.get(item['product_id'])
-        if not product:
-            return jsonify({'success': False, 'message': f'Produk dengan ID {item["product_id"]} tidak ditemukan'}), 404
-        
-        if product.stock < item['quantity']:
-            return jsonify({'success': False, 'message': f'Stok produk {product.name} tidak mencukupi'}), 400
-        
-        # Update product stock
-        product.stock -= item['quantity']
-        
-        # Add transaction item
-        transaction_item = TransactionItem(
-            product_id=product.id,
-            quantity=item['quantity'],
-            price=product.price
+    try:
+        # Mulai Transaksi Database
+        transaction = Transaction(
+            customer_id=customer_id,
+            user_id=current_user.id,
+            payment_method=payment_method,
+            notes=notes,
+            created_at=datetime.now(),
+            # --- PERBAIKAN DI SINI ---
+            total_amount=0,      # Isi 0 dulu agar lolos validasi NOT NULL saat autoflush
+            discount_amount=0    # Isi 0 dulu
+            # -------------------------
         )
-        transaction.items.append(transaction_item)
+        db.session.add(transaction)
         
-        # Calculate subtotal
-        subtotal = Decimal(str(product.price)) * Decimal(str(item['quantity']))
-        total_amount += subtotal
+        total_amount = Decimal('0')
         
-        # Hitung final total di server untuk keamanan
-        final_total = total_amount - discount_amount
-        transaction.total_amount = final_total
-    
-    transaction.total_amount = float(total_amount)
-    
-    # Save transaction
-    db.session.add(transaction)
-    db.session.commit()
-    
-    return jsonify({
-        'success': True, 
-        'transaction_id': transaction.id,
-        'total_amount': transaction.total_amount,
-        'discount_amount': transaction.discount_amount
-    })
+        # Proses Item
+        for item in items:
+            product = Product.query.with_for_update().get(item['product_id']) # Lock Row (PostgreSQL/MySQL InnoDB)
+            
+            if not product:
+                db.session.rollback()
+                return jsonify({'success': False, 'message': f'Produk ID {item["product_id"]} tidak ditemukan'}), 404
+            
+            qty = int(item['quantity'])
+            if product.stock < qty:
+                db.session.rollback()
+                return jsonify({'success': False, 'message': f'Stok {product.name} kurang. Sisa: {product.stock}'}), 400
+            
+            # Kurangi Stok
+            product.stock -= qty
+            
+            # Hitung Subtotal
+            price = Decimal(str(product.price))
+            subtotal = price * qty
+            total_amount += subtotal
+            
+            # Tambah Item ke Transaksi
+            transaction_item = TransactionItem(
+                transaction=transaction, # Link ke parent
+                product_id=product.id,
+                quantity=qty,
+                price=product.price # Simpan harga saat transaksi terjadi
+            )
+            db.session.add(transaction_item)
+        
+        # --- PERBAIKAN LOGIKA DISKON (SERVER SIDE CALCULATION) ---
+        # Jangan percaya data diskon dari frontend. Hitung ulang hak promosi user.
+        
+        discount_amount = Decimal('0')
+        
+        # Ambil promo aktif untuk customer ini
+        active_promotions = db.session.query(Promotion)\
+            .join(CustomerSegment, Promotion.segment_id == CustomerSegment.id)\
+            .join(CustomerSegmentMembership, CustomerSegment.id == CustomerSegmentMembership.segment_id)\
+            .filter(CustomerSegmentMembership.customer_id == customer_id)\
+            .all()
+            
+        # Ambil diskon terbesar yang berhak didapatkan
+        for promo in active_promotions:
+            current_discount = Decimal('0')
+            if promo.promotion_type == 'percentage_discount':
+                # Diskon Persen
+                val = Decimal(str(promo.promotion_value))
+                current_discount = total_amount * (val / 100)
+            elif promo.promotion_type == 'fixed_discount':
+                # Diskon Rupiah
+                val = Decimal(str(promo.promotion_value))
+                current_discount = val
+            
+            # Kita ambil diskon yang paling menguntungkan pelanggan (jika ada tumpang tindih)
+            if current_discount > discount_amount:
+                discount_amount = current_discount
+        
+        # Pastikan diskon tidak minus atau melebihi total
+        if discount_amount > total_amount:
+            discount_amount = total_amount
+            
+        transaction.total_amount = total_amount - discount_amount
+        transaction.discount_amount = discount_amount
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'transaction_id': transaction.id,
+            'total_gross': float(total_amount),
+            'discount_applied': float(discount_amount),
+            'total_net': float(transaction.total_amount)
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Checkout Error: {e}") # Log error ke terminal
+        return jsonify({'success': False, 'message': 'Terjadi kesalahan sistem saat checkout'}), 500
 
 @bp.route('/api/customer-segments/<int:customer_id>')
 @login_required
 def api_customer_segments(customer_id):
+    # Route ini digunakan frontend POS untuk menampilkan info promo sebelum checkout
     customer = Customer.query.get_or_404(customer_id)
     
-    # Get customer segments and promotions
     data = db.session.query(CustomerSegmentMembership, CustomerSegment, Promotion)\
         .join(CustomerSegmentMembership.segment)\
         .outerjoin(CustomerSegment.promotion)\
@@ -176,19 +229,18 @@ def api_customer_segments(customer_id):
     
     segment_info = []
     promotions = []
+    
     for membership, segment, promotion in data:
         segment_info.append({
             'id': segment.id,
             'name': segment.segment_name,
-            'description': segment.description,
-            'color': segment.color,
-            'assigned_at': membership.assigned_at.strftime('%Y-%m-%d')
+            'color': segment.color
         })
         
         if promotion:
             promotions.append({
                 'type': promotion.promotion_type,
-                'value': promotion.promotion_value,
+                'value': float(promotion.promotion_value),
                 'description': promotion.description
             })
     
@@ -196,8 +248,6 @@ def api_customer_segments(customer_id):
         'customer': {
             'id': customer.id,
             'name': customer.name,
-            'phone': customer.phone,
-            'email': customer.email
         },
         'segments': segment_info,
         'promotions': promotions

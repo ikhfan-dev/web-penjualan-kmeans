@@ -1,83 +1,136 @@
-{% extends "layout.html" %}
-
-{% block page_title %}{{ title }}{% endblock %}
-
-{% block content %}
+{% extends "layout.html" %} {% block page_title %}{{ title }}{% endblock %} {%
+block content %}
 <div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+  <div class="col-lg-8">
+    <div class="card shadow mb-4">
+      <div
+        class="card-header py-3 d-flex align-items-center justify-content-between bg-white"
+      >
+        <h6 class="m-0 font-weight-bold text-primary">
+          <i class="fas fa-tag me-2"></i>{{ title }}
+        </h6>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            {{ form.segment_id.label(class="form-label fw-bold") }} {% if
+            form.segment_id.errors %} {{ form.segment_id(class="form-select
+            is-invalid") }}
+            <div class="invalid-feedback">
+              {% for error in form.segment_id.errors %} {{ error }} {% endfor %}
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        {{ form.segment_id.label(class="form-label") }}
-                        {{ form.segment_id(class="form-select") }}
-                        {% if form.segment_id.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.segment_id.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.promotion_type.label(class="form-label") }}
-                        {{ form.promotion_type(class="form-select") }}
-                        {% if form.promotion_type.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.promotion_type.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.promotion_value.label(class="form-label") }}
-                        <div class="input-group">
-                            {% if form.promotion_type.data == 'fixed_discount' %}
-                            <span class="input-group-text">Rp</span>
-                            {% endif %}
-                            {{ form.promotion_value(class="form-control") }}
-                            {% if form.promotion_type.data == 'percentage_discount' %}
-                            <span class="input-group-text">%</span>
-                            {% endif %}
-                        </div>
-                        {% if form.promotion_value.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.promotion_value.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control", rows="3") }}
-                        {% if form.description.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.description.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('promotions.list_promotions') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Kembali
-                        </a>
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
+            {% else %} {{ form.segment_id(class="form-select") }} {% endif %}
+            <div class="form-text small">
+              Pilih segmen pelanggan yang akan menerima promosi ini.
             </div>
-        </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              {{ form.promotion_type.label(class="form-label fw-bold") }} {% if
+              form.promotion_type.errors %} {{
+              form.promotion_type(class="form-select is-invalid",
+              id="promotion_type") }}
+              <div class="invalid-feedback">
+                {% for error in form.promotion_type.errors %} {{ error }} {%
+                endfor %}
+              </div>
+              {% else %} {{ form.promotion_type(class="form-select",
+              id="promotion_type") }} {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.promotion_value.label(class="form-label fw-bold") }}
+              <div class="input-group">
+                <span
+                  class="input-group-text"
+                  id="addon-rp"
+                  style="display: none"
+                  >Rp</span
+                >
+
+                {% if form.promotion_value.errors %} {{
+                form.promotion_value(class="form-control is-invalid",
+                type="number", min="0", step="0.01") }}
+                <div class="invalid-feedback">
+                  {% for error in form.promotion_value.errors %} {{ error }} {%
+                  endfor %}
+                </div>
+                {% else %} {{ form.promotion_value(class="form-control",
+                type="number", min="0", step="0.01", placeholder="0") }} {%
+                endif %}
+
+                <span
+                  class="input-group-text"
+                  id="addon-percent"
+                  style="display: none"
+                  >%</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            {{ form.description.label(class="form-label fw-bold") }} {% if
+            form.description.errors %} {{ form.description(class="form-control
+            is-invalid", rows="3", placeholder="Contoh: Diskon khusus pelanggan
+            setia") }}
+            <div class="invalid-feedback">
+              {% for error in form.description.errors %} {{ error }} {% endfor
+              %}
+            </div>
+            {% else %} {{ form.description(class="form-control", rows="3",
+            placeholder="Contoh: Diskon khusus pelanggan setia") }} {% endif %}
+          </div>
+
+          <hr />
+
+          <div class="d-flex justify-content-between">
+            <a
+              href="{{ url_for('promotions.list_promotions') }}"
+              class="btn btn-secondary"
+            >
+              <i class="fas fa-arrow-left me-1"></i> Batal
+            </a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="fas fa-save me-1"></i> Simpan Promosi
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function () {
+    // Fungsi untuk update tampilan input berdasarkan dropdown
+    function updateInputAddons() {
+      var type = $("#promotion_type").val();
+
+      if (type === "percentage_discount") {
+        $("#addon-rp").hide();
+        $("#addon-percent").show();
+        $('input[name="promotion_value"]').attr(
+          "placeholder",
+          "Contoh: 10 (untuk 10%)"
+        );
+      } else {
+        $("#addon-rp").show();
+        $("#addon-percent").hide();
+        $('input[name="promotion_value"]').attr("placeholder", "Contoh: 5000");
+      }
+    }
+
+    // Jalankan saat halaman dimuat
+    updateInputAddons();
+
+    // Jalankan saat dropdown berubah
+    $("#promotion_type").change(function () {
+      updateInputAddons();
+    });
+  });
+</script>
 {% endblock %}
