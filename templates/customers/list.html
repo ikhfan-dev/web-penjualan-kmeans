@@ -72,9 +72,13 @@
             </td>
             <td>
               <div class="fw-bold">{{ customer.name }}</div>
-              <small class="text-muted"
-                >{{ customer.address | truncate(30) }}</small
-              >
+              <small class="text-muted">
+                {% if customer.address %}
+                  {{ customer.address | truncate(30) }}
+                {% else %}
+                  -
+                {% endif %}
+              </small>
             </td>
             <td>
               {% if customer.phone %}

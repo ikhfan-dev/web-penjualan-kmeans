@@ -31,14 +31,14 @@ endblock %} {% block content %}
   <div class="card-body">
     {% if summary_stats %}
     <div class="table-responsive">
-      <table class="table table-bordered table-hover">
+      <table class="table table-bordered table-hover align-middle">
         <thead class="table-primary">
           <tr class="text-center">
             <th>Segmen Pelanggan</th>
             <th>Jumlah User</th>
-            <th>Rata-rata Recency</th>
-            <th>Rata-rata Frequency</th>
-            <th>Rata-rata Monetary</th>
+            <th>Statistik Recency (Hari)</th>
+            <th>Statistik Frequency (x)</th>
+            <th>Statistik Monetary (Rp)</th>
           </tr>
         </thead>
         <tbody>
@@ -52,20 +52,36 @@ endblock %} {% block content %}
                 {{ stat.segment_name }}
               </span>
             </td>
-            <td class="text-center fw-bold">{{ stat.count }} Orang</td>
+            <td class="text-center fw-bold fs-5">{{ stat.count }} <span class="fs-6 fw-normal">Orang</span></td>
 
             <td class="text-center">
               {% if stat.avg_recency == -1 %}
               <span class="text-muted">-</span>
-              {% else %} {{ "{:,.0f}".format(stat.avg_recency) }} Hari {% endif
-              %}
+              {% else %}
+              <div class="fw-bold fs-5">{{ "{:,.0f}".format(stat.avg_recency) }}</div>
+              <small class="text-muted">
+                (Min: {{ "{:,.0f}".format(stat.min_recency) }}, 
+                Max: {{ "{:,.0f}".format(stat.max_recency) }}, 
+                Std: {{ "{:,.1f}".format(stat.std_recency) }})
+              </small>
+              {% endif %}
             </td>
 
             <td class="text-center">
-              {{ "{:,.1f}".format(stat.avg_frequency) }} x
+              <div class="fw-bold fs-5">{{ "{:,.1f}".format(stat.avg_frequency) }}</div>
+              <small class="text-muted">
+                (Min: {{ "{:,.0f}".format(stat.min_frequency) }}, 
+                Max: {{ "{:,.0f}".format(stat.max_frequency) }}, 
+                Std: {{ "{:,.1f}".format(stat.std_frequency) }})
+              </small>
             </td>
-            <td class="text-end fw-bold text-success">
-              {{ stat.avg_monetary | rp }}
+            <td class="text-end">
+              <div class="fw-bold fs-5 text-success">{{ stat.avg_monetary | rp }}</div>
+              <small class="text-muted">
+                (Min: {{ stat.min_monetary | rp }}, 
+                Max: {{ stat.max_monetary | rp }}, 
+                Std: {{ stat.std_monetary | rp }})
+              </small>
             </td>
           </tr>
           {% endfor %}

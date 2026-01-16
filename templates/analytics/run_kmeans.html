@@ -76,6 +76,23 @@ endblock %} {% block content %}
       </div>
     </div>
 
+    <!-- Poin 4: Danger Zone untuk Reset Data -->
+    <div class="card shadow mb-4 border-start border-danger border-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 font-weight-bold text-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>Zona Berbahaya
+        </h6>
+      </div>
+      <div class="card-body">
+        <p>Tindakan di bawah ini bersifat permanen dan tidak dapat dibatalkan. Gunakan dengan hati-hati.</p>
+        <form action="{{ url_for('analytics.reset_data') }}" method="POST" onsubmit="return confirm('PERINGATAN: Anda akan menghapus SEMUA data pelanggan, transaksi, dan segmentasi. Aksi ini tidak dapat dibatalkan. Lanjutkan?');">
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash-alt me-2"></i>Reset Semua Data Pelanggan & Transaksi
+          </button>
+        </form>
+      </div>
+    </div>
+
     <div class="card shadow mb-4">
       <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold text-secondary">

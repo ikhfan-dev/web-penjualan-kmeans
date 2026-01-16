@@ -1,0 +1,611 @@
+[
+    {
+        "name": "ABC Susu Kopi",
+        "category": "minuman",
+        "price": 2500,
+        "stock": 180,
+        "unit": "sachet"
+    },
+    {
+        "name": "Ale-Ale",
+        "category": "minuman",
+        "price": 1000,
+        "stock": 200,
+        "unit": "pcs"
+    },
+    {
+        "name": "ABC Batre",
+        "category": "lainnya",
+        "price": 3000,
+        "stock": 40,
+        "unit": "pcs"
+    },
+    {
+        "name": "Aqua Gelas",
+        "category": "minuman",
+        "price": 500,
+        "stock": 300,
+        "unit": "gelas"
+    },
+    {
+        "name": "Aqua Botol",
+        "category": "minuman",
+        "price": 3000,
+        "stock": 150,
+        "unit": "botol"
+    },
+    {
+        "name": "Antangin",
+        "category": "obat",
+        "price": 4000,
+        "stock": 90,
+        "unit": "sachet"
+    },
+    {
+        "name": "Amplop",
+        "category": "lainnya",
+        "price": 500,
+        "stock": 120,
+        "unit": "pcs"
+    },
+    {
+        "name": "Adem Sari",
+        "category": "minuman",
+        "price": 2500,
+        "stock": 160,
+        "unit": "sachet"
+    },
+    {
+        "name": "Buku Tulis",
+        "category": "sekolah",
+        "price": 3000,
+        "stock": 70,
+        "unit": "pcs"
+    },
+    {
+        "name": "Beng-Beng",
+        "category": "makanan",
+        "price": 2500,
+        "stock": 140,
+        "unit": "pcs"
+    },
+    {
+        "name": "Bango Kecap Kecil",
+        "category": "sembako",
+        "price": 1000,
+        "stock": 60,
+        "unit": "sachet"
+    },
+    {
+        "name": "Bango Kecap Sedang",
+        "category": "sembako",
+        "price": 3000,
+        "stock": 80,
+        "unit": "botol"
+    },
+    {
+        "name": "Bodrex",
+        "category": "obat",
+        "price": 1000,
+        "stock": 90,
+        "unit": "tablet"
+    },
+    {
+        "name": "Cibodas Air Mineral",
+        "category": "minuman",
+        "price": 500,
+        "stock": 250,
+        "unit": "gelas"
+    },
+    {
+        "name": "Cimory Yogurt",
+        "category": "minuman",
+        "price": 3000,
+        "stock": 120,
+        "unit": "botol"
+    },
+    {
+        "name": "Chiki Citato",
+        "category": "makanan",
+        "price": 2000,
+        "stock": 180,
+        "unit": "pak"
+    },
+    {
+        "name": "Class Mild Rokok",
+        "category": "rokok",
+        "price": 30000,
+        "stock": 50,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Clear Sampo",
+        "category": "rumah tangga",
+        "price": 1000,
+        "stock": 200,
+        "unit": "sachet"
+    },
+    {
+        "name": "Cuka",
+        "category": "sembako",
+        "price": 1000,
+        "stock": 100,
+        "unit": "botol"
+    },
+    {
+        "name": "Downy Pewangi",
+        "category": "rumah tangga",
+        "price": 1000,
+        "stock": 150,
+        "unit": "sachet"
+    },
+    {
+        "name": "Diapet",
+        "category": "obat",
+        "price": 1000,
+        "stock": 100,
+        "unit": "tablet"
+    },
+    {
+        "name": "Energen",
+        "category": "minuman",
+        "price": 2000,
+        "stock": 180,
+        "unit": "sachet"
+    },
+    {
+        "name": "Envio Rokok",
+        "category": "rokok",
+        "price": 1500,
+        "stock": 90,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Entrostop",
+        "category": "obat",
+        "price": 1000,
+        "stock": 100,
+        "unit": "strip"
+    },
+    {
+        "name": "Extra Joss",
+        "category": "minuman",
+        "price": 1500,
+        "stock": 200,
+        "unit": "sachet"
+    },
+    {
+        "name": "Fanta",
+        "category": "minuman",
+        "price": 3500,
+        "stock": 120,
+        "unit": "botol"
+    },
+    {
+        "name": "Floridina",
+        "category": "minuman",
+        "price": 3500,
+        "stock": 130,
+        "unit": "botol"
+    },
+    {
+        "name": "Frisian Flag",
+        "category": "minuman",
+        "price": 2500,
+        "stock": 150,
+        "unit": "sachet"
+    },
+    {
+        "name": "Garuda Kacang Atom",
+        "category": "makanan",
+        "price": 1000,
+        "stock": 170,
+        "unit": "pcs"
+    },
+    {
+        "name": "Gift Sabun",
+        "category": "rumah tangga",
+        "price": 3500,
+        "stock": 110,
+        "unit": "batang"
+    },
+    {
+        "name": "Gudang Garam Rokok",
+        "category": "rokok",
+        "price": 26000,
+        "stock": 60,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Gula Pasir 1/4kg",
+        "category": "sembako",
+        "price": 4000,
+        "stock": 80,
+        "unit": "pak"
+    },
+    {
+        "name": "Good Day (Sachetan)",
+        "category": "minuman",
+        "price": 2000,
+        "stock": 200,
+        "unit": "sachet"
+    },
+    {
+        "name": "Garam",
+        "category": "sembako",
+        "price": 1500,
+        "stock": 90,
+        "unit": "pak"
+    },
+    {
+        "name": "Gillette Cukuran Kumis",
+        "category": "lainnya",
+        "price": 6000,
+        "stock": 40,
+        "unit": "pcs"
+    },
+    {
+        "name": "Head & Shoulders Sampo",
+        "category": "rumah tangga",
+        "price": 1000,
+        "stock": 150,
+        "unit": "sachet"
+    },
+    {
+        "name": "Hansaplast",
+        "category": "obat",
+        "price": 500,
+        "stock": 100,
+        "unit": "pcs"
+    },
+    {
+        "name": "Indomie Semua Jenis",
+        "category": "makanan",
+        "price": 3500,
+        "stock": 300,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Jarum Super Rokok",
+        "category": "rokok",
+        "price": 26000,
+        "stock": 60,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Jarum Kretek",
+        "category": "rokok",
+        "price": 17000,
+        "stock": 70,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Jie Sam Soe",
+        "category": "rokok",
+        "price": 21000,
+        "stock": 50,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Jazzy Bold",
+        "category": "rokok",
+        "price": 25000,
+        "stock": 40,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Koyo Cabe",
+        "category": "obat",
+        "price": 1500,
+        "stock": 90,
+        "unit": "lembar"
+    },
+    {
+        "name": "Kiss Permen",
+        "category": "makanan",
+        "price": 130,
+        "stock": 300,
+        "unit": "pcs"
+    },
+    {
+        "name": "Kopiko",
+        "category": "makanan",
+        "price": 150,
+        "stock": 300,
+        "unit": "pcs"
+    },
+    {
+        "name": "Korek Api",
+        "category": "lainnya",
+        "price": 2000,
+        "stock": 100,
+        "unit": "pcs"
+    },
+    {
+        "name": "Kapal Api (Sachetan)",
+        "category": "minuman",
+        "price": 2500,
+        "stock": 180,
+        "unit": "sachet"
+    },
+    {
+        "name": "Kacang",
+        "category": "makanan",
+        "price": 1000,
+        "stock": 150,
+        "unit": "pcs"
+    },
+    {
+        "name": "Kalpa",
+        "category": "makanan",
+        "price": 2500,
+        "stock": 120,
+        "unit": "pcs"
+    },
+    {
+        "name": "Kopi Luwak (Sachetan)",
+        "category": "minuman",
+        "price": 2000,
+        "stock": 200,
+        "unit": "sachet"
+    },
+    {
+        "name": "Kratingdeng",
+        "category": "minuman",
+        "price": 7000,
+        "stock": 80,
+        "unit": "botol"
+    },
+    {
+        "name": "Larutan K3",
+        "category": "minuman",
+        "price": 7000,
+        "stock": 90,
+        "unit": "botol"
+    },
+    {
+        "name": "Lifebuoy Sampo",
+        "category": "rumah tangga",
+        "price": 1000,
+        "stock": 120,
+        "unit": "sachet"
+    },
+    {
+        "name": "Liong Bulan Kopi (Sachetan)",
+        "category": "minuman",
+        "price": 2500,
+        "stock": 140,
+        "unit": "sachet"
+    },
+    {
+        "name": "Lux Sabun",
+        "category": "rumah tangga",
+        "price": 3500,
+        "stock": 100,
+        "unit": "batang"
+    },
+    {
+        "name": "Le Minerale Gelas",
+        "category": "minuman",
+        "price": 3000,
+        "stock": 200,
+        "unit": "gelas"
+    },
+    {
+        "name": "Le Minerale Botol",
+        "category": "minuman",
+        "price": 3000,
+        "stock": 150,
+        "unit": "botol"
+    },
+    {
+        "name": "Lakban Bening",
+        "category": "lainnya",
+        "price": 1000,
+        "stock": 60,
+        "unit": "pcs"
+    },
+    {
+        "name": "Lampu 10W",
+        "category": "rumah tangga",
+        "price": 15000,
+        "stock": 40,
+        "unit": "pcs"
+    },
+    {
+        "name": "Magnum Rokok",
+        "category": "rokok",
+        "price": 26000,
+        "stock": 60,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Molto Pewangi",
+        "category": "rumah tangga",
+        "price": 500,
+        "stock": 200,
+        "unit": "sachet"
+    },
+    {
+        "name": "Masako",
+        "category": "makanan",
+        "price": 500,
+        "stock": 250,
+        "unit": "sachet"
+    },
+    {
+        "name": "Mixagrip",
+        "category": "obat",
+        "price": 1000,
+        "stock": 90,
+        "unit": "tablet"
+    },
+    {
+        "name": "Mama Lemon (Kecil)",
+        "category": "rumah tangga",
+        "price": 1000,
+        "stock": 80,
+        "unit": "botol"
+    },
+    {
+        "name": "Masker",
+        "category": "lainnya",
+        "price": 2000,
+        "stock": 150,
+        "unit": "pcs"
+    },
+    {
+        "name": "Materai",
+        "category": "lainnya",
+        "price": 12000,
+        "stock": 50,
+        "unit": "pcs"
+    },
+    {
+        "name": "Nuvo Sabun",
+        "category": "rumah tangga",
+        "price": 3500,
+        "stock": 90,
+        "unit": "batang"
+    },
+    {
+        "name": "Neozep",
+        "category": "obat",
+        "price": 1000,
+        "stock": 100,
+        "unit": "tablet"
+    },
+    {
+        "name": "Oskadon",
+        "category": "obat",
+        "price": 1000,
+        "stock": 100,
+        "unit": "tablet"
+    },
+    {
+        "name": "Okky Jelly Drink",
+        "category": "minuman",
+        "price": 2000,
+        "stock": 200,
+        "unit": "pcs"
+    },
+    {
+        "name": "Power F",
+        "category": "lainnya",
+        "price": 1000,
+        "stock": 60,
+        "unit": "pcs"
+    },
+    {
+        "name": "Passeo Tisu",
+        "category": "rumah tangga",
+        "price": 3000,
+        "stock": 120,
+        "unit": "pak"
+    },
+    {
+        "name": "Pampes",
+        "category": "rumah tangga",
+        "price": 2000,
+        "stock": 100,
+        "unit": "pcs"
+    },
+    {
+        "name": "Plastik 1kg",
+        "category": "lainnya",
+        "price": 8000,
+        "stock": 90,
+        "unit": "pak"
+    },
+    {
+        "name": "Paramex",
+        "category": "obat",
+        "price": 1000,
+        "stock": 80,
+        "unit": "tablet"
+    },
+    {
+        "name": "Pocari Sweat",
+        "category": "minuman",
+        "price": 8000,
+        "stock": 130,
+        "unit": "botol"
+    },
+    {
+        "name": "Sampoerna Mild",
+        "category": "rokok",
+        "price": 35000,
+        "stock": 70,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Susu Beruang",
+        "category": "minuman",
+        "price": 12000,
+        "stock": 90,
+        "unit": "kaleng"
+    },
+    {
+        "name": "Surya 16 Rokok",
+        "category": "rokok",
+        "price": 36000,
+        "stock": 60,
+        "unit": "bungkus"
+    },
+    {
+        "name": "Sariwangi Teh",
+        "category": "minuman",
+        "price": 1000,
+        "stock": 180,
+        "unit": "sachet"
+    },
+    {
+        "name": "Salonpas",
+        "category": "obat",
+        "price": 2000,
+        "stock": 70,
+        "unit": "lembar"
+    },
+    {
+        "name": "Soklin",
+        "category": "rumah tangga",
+        "price": 1000,
+        "stock": 100,
+        "unit": "sachet"
+    },
+    {
+        "name": "Teh Gelas",
+        "category": "minuman",
+        "price": 1000,
+        "stock": 200,
+        "unit": "gelas"
+    },
+    {
+        "name": "Teh Pucuk",
+        "category": "minuman",
+        "price": 4000,
+        "stock": 150,
+        "unit": "botol"
+    },
+    {
+        "name": "Tolak Angin",
+        "category": "obat",
+        "price": 4000,
+        "stock": 90,
+        "unit": "sachet"
+    },
+    {
+        "name": "Ultra Flu",
+        "category": "obat",
+        "price": 1000,
+        "stock": 90,
+        "unit": "tablet"
+    },
+    {
+        "name": "Zinc Sampo",
+        "category": "rumah tangga",
+        "price": 1000,
+        "stock": 120,
+        "unit": "sachet"
+    }
+]

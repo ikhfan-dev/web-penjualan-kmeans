@@ -20,13 +20,23 @@
   <div class="card-body">
     <form method="GET" class="row g-3 align-items-end">
       <div class="col-md-4">
-        <label for="date" class="form-label fw-bold">Tanggal Transaksi</label>
+        <label for="start_date" class="form-label fw-bold">Tanggal Mulai</label>
         <input
           type="date"
           class="form-control"
-          id="date"
-          name="date"
-          value="{{ date_filter }}"
+          id="start_date"
+          name="start_date"
+          value="{{ start_date or '' }}"
+        />
+      </div>
+      <div class="col-md-4">
+        <label for="end_date" class="form-label fw-bold">Tanggal Akhir</label>
+        <input
+          type="date"
+          class="form-control"
+          id="end_date"
+          name="end_date"
+          value="{{ end_date or '' }}"
         />
       </div>
       <div class="col-md-4">
@@ -34,7 +44,7 @@
           <button type="submit" class="btn btn-primary">
             <i class="fas fa-search me-1"></i> Tampilkan
           </button>
-          {% if date_filter %}
+          {% if start_date or end_date %}
           <a
             href="{{ url_for('sales.transactions') }}"
             class="btn btn-secondary"
@@ -145,7 +155,7 @@
         >
           <a
             class="page-link"
-            href="{{ url_for('sales.transactions', page=transactions.prev_num, date=date_filter) }}"
+            href="{{ url_for('sales.transactions', page=transactions.prev_num, start_date=start_date, end_date=end_date) }}"
             >Previous</a
           >
         </li>
@@ -157,7 +167,7 @@
         >
           <a
             class="page-link"
-            href="{{ url_for('sales.transactions', page=page_num, date=date_filter) }}"
+            href="{{ url_for('sales.transactions', page=page_num, start_date=start_date, end_date=end_date) }}"
             >{{ page_num }}</a
           >
         </li>
@@ -170,7 +180,7 @@
         >
           <a
             class="page-link"
-            href="{{ url_for('sales.transactions', page=transactions.next_num, date=date_filter) }}"
+            href="{{ url_for('sales.transactions', page=transactions.next_num, start_date=start_date, end_date=end_date) }}"
             >Next</a
           >
         </li>
@@ -181,7 +191,7 @@
     <div class="text-center py-5">
       <i class="fas fa-receipt fa-3x text-gray-300 mb-3"></i>
       <p class="text-muted">Tidak ada data transaksi yang ditemukan.</p>
-      {% if date_filter %}
+      {% if start_date or end_date %}
       <a
         href="{{ url_for('sales.transactions') }}"
         class="btn btn-sm btn-secondary"

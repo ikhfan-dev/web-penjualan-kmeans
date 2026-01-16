@@ -8,6 +8,7 @@ from models.analytics import CustomerSegment, CustomerSegmentMembership, Promoti
 from app import db
 from datetime import datetime, date, timedelta
 from decimal import Decimal
+import calendar # <-- Import calendar
 from sqlalchemy import func, desc
 from sqlalchemy.orm import joinedload
 from utils.decorators import role_required
@@ -16,40 +17,57 @@ from utils.decorators import role_required
 @role_required('admin', 'cashier')
 @login_required
 def dashboard():
-    # Optimasi: Hitung count via database (lebih cepat daripada len(query.all()))
+    # --- Data untuk Kartu Ringkasan ---
     products_count = Product.query.count()
     customers_count = Customer.query.count()
-    
     today = date.today()
-    # Gunakan func.date untuk kompatibilitas
-    today_transactions = Transaction.query.filter(
-        func.date(Transaction.created_at) == today
-    ).count()
+    today_transactions_count = Transaction.query.filter(func.date(Transaction.created_at) == today).count()
     
-    # Low stock: ambil count-nya saja untuk badge, ambil datanya untuk tabel
+    # --- Poin 6.1: Omset Bulanan ---
+    _, num_days_in_month = calendar.monthrange(today.year, today.month)
+    first_day_of_month = date(today.year, today.month, 1)
+    last_day_of_month = date(today.year, today.month, num_days_in_month)
+    
+    monthly_turnover = db.session.query(func.sum(Transaction.total_amount))\
+        .filter(Transaction.created_at.between(first_day_of_month, f"{last_day_of_month} 23:59:59"))\
+        .scalar() or Decimal('0')
+
+    # --- Data untuk tabel & list di bawah ---
     low_stock_query = Product.query.filter(Product.stock < 10)
     low_stock_count = low_stock_query.count()
     low_stock_products = low_stock_query.limit(5).all()
     
-    # Eager load customer & user untuk mencegah N+1 Query
-    recent_transactions = Transaction.query\
-        .options(joinedload(Transaction.customer), joinedload(Transaction.user))\
-        .order_by(Transaction.created_at.desc())\
-        .limit(5).all()
+    recent_transactions = Transaction.query.options(joinedload(Transaction.customer), joinedload(Transaction.user))\
+        .order_by(Transaction.created_at.desc()).limit(5).all()
     
-    # Top customers
-    top_customers = db.session.query(
-        Customer.id, Customer.name, func.count(Transaction.id).label('transaction_count')
-    ).join(Transaction).group_by(Customer.id).order_by(desc('transaction_count')).limit(5).all()
+    top_customers = db.session.query(Customer.id, Customer.name, func.count(Transaction.id).label('transaction_count'))\
+        .join(Transaction).group_by(Customer.id).order_by(desc('transaction_count')).limit(5).all()
+
+    # --- Poin 6.2: Perbandingan Transaksi Harian (7 Hari Terakhir) ---
+    seven_days_ago = today - timedelta(days=6)
+    txs_last_7_days = db.session.query(Transaction.created_at)\
+        .filter(Transaction.created_at >= seven_days_ago).all()
     
+    day_labels = [(today - timedelta(days=i)).strftime("%a") for i in range(6, -1, -1)] # e.g. ['Mon', 'Tue', ...]
+    daily_counts = [0] * 7 # [Count for 6 days ago, ..., today]
+    
+    for tx_time, in txs_last_7_days:
+        # Hitung selisih hari dari 'tujuh_hari_lalu'
+        day_diff = (tx_time.date() - seven_days_ago).days
+        if 0 <= day_diff < 7:
+            daily_counts[day_diff] += 1
+            
     return render_template('sales/dashboard.html', 
                           products_count=products_count,
                           customers_count=customers_count,
-                          today_transactions=today_transactions,
+                          today_transactions=today_transactions_count,
                           low_stock_count=low_stock_count,
                           recent_transactions=recent_transactions,
                           low_stock_products=low_stock_products,
-                          top_customers=top_customers)
+                          top_customers=top_customers,
+                          monthly_turnover=monthly_turnover, # Data baru
+                          day_labels=day_labels,           # Data baru
+                          daily_counts=daily_counts)       # Data baru
 
 @bp.route('/pos')
 @role_required('admin', 'cashier')
@@ -62,31 +80,36 @@ def pos():
 @login_required
 def transactions():
     page = request.args.get('page', 1, type=int)
-    date_filter = request.args.get('date', '')
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
     
     # Eager load relasi agar tabel tidak berat
     query = Transaction.query.options(joinedload(Transaction.customer), joinedload(Transaction.user))
     
-    if date_filter:
-        try:
-            filter_date = datetime.strptime(date_filter, '%Y-%m-%d').date()
-            # PERBAIKAN BUG TANGGAL: Gunakan timedelta
-            next_day = filter_date + timedelta(days=1)
-            
-            query = query.filter(
-                Transaction.created_at >= filter_date,
-                Transaction.created_at < next_day
-            )
-        except ValueError:
-            flash('Format tanggal tidak valid', 'danger')
-    
+    try:
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            query = query.filter(Transaction.created_at >= start_date)
+        
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            # Tambah 1 hari untuk membuat rentang inklusif
+            end_date_plus_one = end_date + timedelta(days=1)
+            query = query.filter(Transaction.created_at < end_date_plus_one)
+
+    except ValueError:
+        flash('Format tanggal tidak valid. Gunakan YYYY-MM-DD.', 'danger')
+        start_date_str = ''
+        end_date_str = ''
+
     transactions = query.order_by(Transaction.created_at.desc()).paginate(
         page=page, per_page=10, error_out=False
     )
     
     return render_template('sales/transactions.html', 
                           transactions=transactions, 
-                          date_filter=date_filter)
+                          start_date=start_date_str,
+                          end_date=end_date_str)
 
 @bp.route('/transaction/<int:id>')
 @role_required('admin', 'cashier')

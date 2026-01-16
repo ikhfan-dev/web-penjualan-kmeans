@@ -1,27 +1,28 @@
-{% extends "layout.html" %} {% block page_title %}Dashboard Ringkasan{% endblock
-%} {% block content %}
+{% extends "layout.html" %} {% block page_title %}Dashboard Ringkasan{% endblock %} 
+{% block content %}
 <div class="row mb-4">
-  <div class="col-xl-3 col-md-6 mb-4">
+  <!-- Kartu Omset Bulanan (BARU) -->
+  <div class="col-xl col-md-6 mb-4">
     <div class="card border-start border-primary border-4 shadow h-100 py-2">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs fw-bold text-primary text-uppercase mb-1">
-              Total Produk
+              Omset Bulan Ini
             </div>
             <div class="h5 mb-0 fw-bold text-gray-800">
-              {{ products_count }}
+              {{ monthly_turnover | rp }}
             </div>
           </div>
           <div class="col-auto">
-            <i class="fas fa-box fa-2x text-gray-300"></i>
+            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="col-xl-3 col-md-6 mb-4">
+  <div class="col-xl col-md-6 mb-4">
     <div class="card border-start border-success border-4 shadow h-100 py-2">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
@@ -29,9 +30,7 @@
             <div class="text-xs fw-bold text-success text-uppercase mb-1">
               Total Pelanggan
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">
-              {{ customers_count }}
-            </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">{{ customers_count }}</div>
           </div>
           <div class="col-auto">
             <i class="fas fa-users fa-2x text-gray-300"></i>
@@ -41,7 +40,7 @@
     </div>
   </div>
 
-  <div class="col-xl-3 col-md-6 mb-4">
+  <div class="col-xl col-md-6 mb-4">
     <div class="card border-start border-info border-4 shadow h-100 py-2">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
@@ -49,9 +48,7 @@
             <div class="text-xs fw-bold text-info text-uppercase mb-1">
               Transaksi Hari Ini
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">
-              {{ today_transactions }}
-            </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">{{ today_transactions }}</div>
           </div>
           <div class="col-auto">
             <i class="fas fa-receipt fa-2x text-gray-300"></i>
@@ -60,8 +57,26 @@
       </div>
     </div>
   </div>
+  
+  <div class="col-xl col-md-6 mb-4">
+    <div class="card border-start border-secondary border-4 shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
+              Total Produk
+            </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">{{ products_count }}</div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-box fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <div class="col-xl-3 col-md-6 mb-4">
+  <div class="col-xl col-md-6 mb-4">
     <div class="card border-start border-warning border-4 shadow h-100 py-2">
       <div class="card-body">
         <div class="row no-gutters align-items-center">
@@ -69,9 +84,7 @@
             <div class="text-xs fw-bold text-warning text-uppercase mb-1">
               Stok Menipis
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">
-              {{ low_stock_count }}
-            </div>
+            <div class="h5 mb-0 fw-bold text-gray-800">{{ low_stock_count }}</div>
           </div>
           <div class="col-auto">
             <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
@@ -81,6 +94,59 @@
     </div>
   </div>
 </div>
+
+<div class="row">
+  <!-- Grafik Aktivitas (BARU) -->
+  <div class="col-xl-8 col-lg-7">
+      <div class="card shadow mb-4">
+          <div class="card-header py-3 bg-white">
+              <h6 class="m-0 fw-bold text-primary">Aktivitas Transaksi (7 Hari Terakhir)</h6>
+          </div>
+          <div class="card-body">
+              <div class="chart-area" style="height: 320px;">
+                  <canvas id="dailyActivityChart"></canvas>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Aksi Cepat (Geser ke Kiri) -->
+  <div class="col-xl-4 col-lg-5">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3 bg-white">
+        <h6 class="m-0 fw-bold text-primary">Aksi Cepat</h6>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('sales.pos') }}" class="btn btn-primary">
+            <i class="fas fa-cash-register me-2"></i> Transaksi Baru (POS)
+          </a>
+          <a
+            href="{{ url_for('customers.add_customer') }}"
+            class="btn btn-info text-white"
+          >
+            <i class="fas fa-user-plus me-2"></i> Tambah Pelanggan
+          </a>
+          {% if current_user.role == 'admin' %}
+          <a
+            href="{{ url_for('products.add_product') }}"
+            class="btn btn-success"
+          >
+            <i class="fas fa-plus me-2"></i> Tambah Produk
+          </a>
+          <a
+            href="{{ url_for('analytics.run_kmeans') }}"
+            class="btn btn-warning text-dark"
+          >
+            <i class="fas fa-brain me-2"></i> Analisis AI
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <div class="row">
   <div class="col-lg-8">
@@ -184,77 +250,52 @@
         {% endif %}
       </div>
     </div>
-
-    <div class="card shadow mb-4">
-      <div class="card-header py-3 bg-white">
-        <h6 class="m-0 fw-bold text-primary">Aksi Cepat</h6>
-      </div>
-      <div class="card-body">
-        <div class="d-grid gap-2">
-          <a href="{{ url_for('sales.pos') }}" class="btn btn-primary">
-            <i class="fas fa-cash-register me-2"></i> Transaksi Baru (POS)
-          </a>
-          <a
-            href="{{ url_for('customers.add_customer') }}"
-            class="btn btn-info text-white"
-          >
-            <i class="fas fa-user-plus me-2"></i> Tambah Pelanggan
-          </a>
-          {% if current_user.role == 'admin' %}
-          <a
-            href="{{ url_for('products.add_product') }}"
-            class="btn btn-success"
-          >
-            <i class="fas fa-plus me-2"></i> Tambah Produk
-          </a>
-          <a
-            href="{{ url_for('analytics.run_kmeans') }}"
-            class="btn btn-warning text-dark"
-          >
-            <i class="fas fa-brain me-2"></i> Analisis AI
-          </a>
-          {% endif %}
-        </div>
-      </div>
-    </div>
   </div>
 </div>
+{% endblock %}
 
-<div class="row">
-  <div class="col-12">
-    <div class="card shadow mb-4">
-      <div class="card-header py-3 bg-white">
-        <h6 class="m-0 fw-bold text-primary">Pelanggan Paling Aktif</h6>
-      </div>
-      <div class="card-body">
-        {% if top_customers %}
-        <div class="row">
-          {% for customer in top_customers %}
-          <div class="col-md-4 mb-3">
-            <div class="d-flex align-items-center p-3 border rounded bg-light">
-              <div class="flex-shrink-0">
-                <div
-                  class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                  style="width: 40px; height: 40px"
-                >
-                  <i class="fas fa-user"></i>
-                </div>
-              </div>
-              <div class="flex-grow-1 ms-3">
-                <h6 class="mb-0 fw-bold">{{ customer.name }}</h6>
-                <small class="text-muted"
-                  >{{ customer.transaction_count }} Transaksi</small
-                >
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted">Belum ada data pelanggan yang cukup.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
+{% block scripts %}
+<!-- Tambah library Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Logika untuk render grafik
+  document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById("dailyActivityChart");
+    if (ctx) {
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: {{ day_labels | tojson }},
+          datasets: [
+            {
+              label: "Jumlah Transaksi",
+              data: {{ daily_counts | tojson }},
+              backgroundColor: "rgba(0, 123, 255, 0.5)",
+              borderColor: "rgba(0, 123, 255, 1)",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                  stepSize: 1 // Pastikan sumbu Y hanya menampilkan bilangan bulat
+              }
+            },
+          },
+          plugins: {
+            legend: {
+              display: false, // Sembunyikan legenda
+            },
+          },
+        },
+      });
+    }
+  });
+</script>
 {% endblock %}
