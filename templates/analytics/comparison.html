@@ -1,0 +1,156 @@
+{% extends "layout.html" %}
+{% block page_title %}Perbandingan Omset{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Perbandingan Omset</h1>
+    <a href="{{ url_for('analytics.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Kembali ke Dashboard
+    </a>
+</div>
+
+<div class="alert alert-info border-left-info">
+    <i class="fas fa-info-circle me-2"></i>
+    Halaman ini membandingkan total omset (penjualan bersih) antara periode <strong>sebelum</strong> sistem diskon diterapkan (sebelum {{ start_date }}) dan periode <strong>sesudah</strong> sistem diskon diterapkan (mulai {{ start_date }}).
+</div>
+
+<div class="row">
+    <!-- Omset Sebelum -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-start border-secondary border-4 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
+                            Omset SEBELUM Sistem Diskon
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">
+                            {{ turnover_before | rp }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Omset Sesudah -->
+    <div class="col-md-6 mb-4">
+        <div class="card border-start border-success border-4 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                            Omset SESUDAH Sistem Diskon
+                        </div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">
+                            {{ turnover_after | rp }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-rocket fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hasil Peningkatan -->
+<div class="card bg-primary text-white shadow mb-4">
+    <div class="card-body text-center">
+        <h4 class="card-title mb-3"><i class="fas fa-chart-line me-2"></i>Hasil Peningkatan Omset</h4>
+        {% if percentage_increase > 0 %}
+            <h1 class="display-4 fw-bold">+{{ "%.2f"|format(percentage_increase) }}%</h1>
+            <p class="lead">Terjadi peningkatan omset yang signifikan setelah sistem diskon berbasis segmentasi diterapkan.</p>
+        {% elif percentage_increase == 0 %}
+            <h1 class="display-4 fw-bold">0%</h1>
+            <p class="lead">Tidak ada perubahan omset antara kedua periode.</p>
+        {% else %}
+             <h1 class="display-4 fw-bold text-warning">{{ "%.2f"|format(percentage_increase) }}%</h1>
+            <p class="lead">Terjadi penurunan omset. Perlu dilakukan evaluasi lebih lanjut terhadap strategi promosi.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Grafik Perbandingan -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 bg-white">
+        <h6 class="m-0 fw-bold text-primary">Grafik Perbandingan Omset</h6>
+    </div>
+    <div class="card-body">
+        <div class="chart-area" style="height: 250px;">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctx = document.getElementById('comparisonChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Sebelum Sistem Diskon', 'Sesudah Sistem Diskon'],
+                datasets: [{
+                    label: 'Total Omset',
+                    data: [
+                        {{ turnover_before | float }},
+                        {{ turnover_after | float }}
+                    ],
+                    backgroundColor: [
+                        'rgba(108, 117, 125, 0.5)',
+                        'rgba(25, 135, 84, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(25, 135, 84, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return 'Rp ' + value.toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
