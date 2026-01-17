@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Konfigurasi Aplikasi{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Konfigurasi Aplikasi</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 fw-bold text-primary">Pengaturan Umum</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="app_name" class="form-label">Nama Toko / Aplikasi</label>
+                        {{ form.app_name(class="form-control", placeholder="Contoh: Toko Maju Jaya") }}
+                        {% if form.app_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.app_name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="primary_color" class="form-label">Warna Tema Utama</label>
+                        <div class="input-group">
+                            {{ form.primary_color(class="form-control", id="colorInput") }}
+                            <input type="color" class="form-control form-control-color" id="colorPicker" value="{{ form.primary_color.data }}" title="Pilih Warna">
+                        </div>
+                        <div class="form-text">Warna ini akan diterapkan pada tombol utama, link aktif, dan elemen highlight lainnya.</div>
+                        {% if form.primary_color.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.primary_color.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Preview Sederhana -->
+                    <div class="mb-4">
+                        <label class="form-label">Preview Tombol:</label>
+                        <br>
+                        <button type="button" class="btn text-white" id="btnPreview" style="background-color: {{ form.primary_color.data }};">Tombol Utama</button>
+                        <button type="button" class="btn btn-outline-secondary">Tombol Sekunder</button>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow mb-4 border-left-info">
+            <div class="card-body">
+                <h5 class="card-title text-info"><i class="fas fa-info-circle me-2"></i>Informasi</h5>
+                <p class="card-text">
+                    Fitur ini memungkinkan Anda untuk menyesuaikan identitas aplikasi agar sesuai dengan branding toko Anda.
+                </p>
+                <ul>
+                    <li><strong>Nama Aplikasi:</strong> Akan muncul di Tab Browser dan Header Navigasi.</li>
+                    <li><strong>Warna Tema:</strong> Mengganti warna dominan aplikasi (biasanya Biru).</li>
+                </ul>
+                <p class="text-muted small">
+                    Catatan: Perubahan warna akan langsung diterapkan setelah disimpan.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Sinkronisasi antara input text hex dan color picker
+    const colorInput = document.getElementById('colorInput');
+    const colorPicker = document.getElementById('colorPicker');
+    const btnPreview = document.getElementById('btnPreview');
+
+    colorPicker.addEventListener('input', function() {
+        colorInput.value = this.value;
+        btnPreview.style.backgroundColor = this.value;
+    });
+
+    colorInput.addEventListener('input', function() {
+        if(this.value.length === 7) {
+            colorPicker.value = this.value;
+            btnPreview.style.backgroundColor = this.value;
+        }
+    });
+</script>
+{% endblock %}

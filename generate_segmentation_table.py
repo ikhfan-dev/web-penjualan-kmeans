@@ -24,12 +24,17 @@ def get_data_and_rfm():
     ).join(Customer, Transaction.customer_id == Customer.id)\
     .group_by(Transaction.customer_id, Customer.name).statement
     
-    # Load ke Pandas
-    rfm_df = pd.read_sql(query, db.session.bind)
+    # Load ke Pandas via execute (lebih aman untuk versi Pandas/SQLAlchemy terbaru)
+    result_proxy = db.session.execute(query)
+    results = result_proxy.fetchall()
     
-    if rfm_df.empty:
+    if not results:
         print("❌ Tidak ada data transaksi. Tidak bisa melakukan analisis.")
         return None
+
+    # Ambil nama kolom dari keys
+    columns = list(result_proxy.keys())
+    rfm_df = pd.DataFrame(results, columns=columns)
 
     # Hitung Recency
     current_date = pd.Timestamp.now()

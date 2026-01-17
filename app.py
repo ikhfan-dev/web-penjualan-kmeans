@@ -35,6 +35,22 @@ def create_app(config_class=Config):
         except (ValueError, TypeError):
             return "Rp 0"
 
+    # --- 1.5 CONTEXT PROCESSOR (APP SETTINGS) ---
+    @app.context_processor
+    def inject_app_settings():
+        try:
+            # Import di dalam fungsi untuk menghindari circular import jika ada
+            from models.settings import AppSetting
+            setting = AppSetting.query.first()
+            if not setting:
+                # Fallback object jika belum ada di DB (atau tabel belum dibuat)
+                setting = {'app_name': 'Aplikasi Penjualan', 'primary_color': '#0d6efd'}
+            return dict(app_setting=setting)
+        except Exception:
+             # Fallback jika terjadi error DB (misal saat migrasi awal)
+            return dict(app_setting={'app_name': 'Aplikasi Penjualan', 'primary_color': '#0d6efd'})
+
+
     # --- 2. IMPORT MODELS ---
     # Import di sini untuk menghindari circular import
     from models.user import User
@@ -42,6 +58,7 @@ def create_app(config_class=Config):
     from models.product import Product
     from models.transaction import Transaction, TransactionItem
     from models.analytics import CustomerSegment, CustomerSegmentMembership, Promotion
+    from models.settings import AppSetting
     
     @login_manager.user_loader
     def load_user(user_id):
@@ -68,6 +85,12 @@ def create_app(config_class=Config):
 
     from blueprints.segments import bp as segments_bp
     app.register_blueprint(segments_bp, url_prefix='/segments')
+
+    from blueprints.settings import bp as settings_bp
+    app.register_blueprint(settings_bp, url_prefix='/settings')
+
+    from blueprints.users import bp as users_bp
+    app.register_blueprint(users_bp, url_prefix='/users')
     
     # --- 4. MAIN ROUTES ---
     @app.route('/')

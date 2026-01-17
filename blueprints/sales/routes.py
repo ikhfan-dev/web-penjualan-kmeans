@@ -65,9 +65,10 @@ def dashboard():
                           recent_transactions=recent_transactions,
                           low_stock_products=low_stock_products,
                           top_customers=top_customers,
-                          monthly_turnover=monthly_turnover, # Data baru
-                          day_labels=day_labels,           # Data baru
-                          daily_counts=daily_counts)       # Data baru
+                          monthly_turnover=monthly_turnover, 
+                          day_labels=day_labels,           
+                          daily_counts=daily_counts,
+                          today_date=today.strftime('%Y-%m-%d')) # Pass date for link
 
 @bp.route('/pos')
 @role_required('admin', 'cashier')
@@ -122,6 +123,79 @@ def transaction_detail(id):
     ).get_or_404(id)
     
     return render_template('sales/transaction_detail.html', transaction=transaction)
+
+@bp.route('/turnover')
+@role_required('admin', 'cashier')
+@login_required
+def turnover_report():
+    # 1. Tentukan Rentang Tanggal (Default: Bulan Ini)
+    today = date.today()
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            flash('Format tanggal tidak valid.', 'danger')
+            return redirect(url_for('sales.turnover_report'))
+    else:
+        # Default: Tanggal 1 bulan ini s/d Hari ini
+        start_date = date(today.year, today.month, 1)
+        end_date = today
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+
+    # Tambahkan 1 hari ke end_date untuk query range inklusif
+    end_date_query = end_date + timedelta(days=1)
+
+    # 2. Query Agregasi Harian
+    # Group by Date(created_at)
+    daily_results = db.session.query(
+        func.date(Transaction.created_at).label('tx_date'),
+        func.count(Transaction.id).label('trx_count'),
+        func.count(func.distinct(Transaction.customer_id)).label('cust_count'),
+        func.sum(Transaction.total_amount).label('daily_total')
+    ).filter(
+        Transaction.created_at >= start_date,
+        Transaction.created_at < end_date_query
+    ).group_by(
+        func.date(Transaction.created_at)
+    ).order_by(
+        desc('tx_date')
+    ).all()
+
+    # 3. Hitung Total Summary untuk Kartu
+    summary = {
+        'total_omset': 0,
+        'total_trx': 0,
+        'total_cust': 0 # Ini sum dari daily cust (bukan unique total periode, sesuai request "jumlah pelanggan belanja di hari itu")
+    }
+    
+    # Menghitung unique customer global dalam periode (Opsional, tapi lebih akurat untuk 'Total Pelanggan Unik' di card)
+    global_unique_cust = db.session.query(func.count(func.distinct(Transaction.customer_id)))\
+        .filter(Transaction.created_at >= start_date, Transaction.created_at < end_date_query).scalar()
+
+    formatted_data = []
+    for row in daily_results:
+        summary['total_omset'] += row.daily_total
+        summary['total_trx'] += row.trx_count
+        
+        formatted_data.append({
+            'date': row.tx_date, # Sudah tipe Date object atau string tergantung driver DB
+            'trx_count': row.trx_count,
+            'cust_count': row.cust_count,
+            'total_amount': row.daily_total
+        })
+    
+    summary['total_cust'] = global_unique_cust if global_unique_cust else 0
+
+    return render_template('sales/turnover.html',
+                          daily_data=formatted_data,
+                          summary=summary,
+                          start_date=start_date_str,
+                          end_date=end_date_str)
 
 @bp.route('/api/checkout', methods=['POST'])
 @login_required

@@ -335,7 +335,73 @@ def sales_comparison():
                            percentage_increase=percentage_increase,
                            start_date=discount_system_start_date.strftime('%d %B %Y'))
 
-# NOTE: API routes like /api/segment-data and /api/rfm-data are not included
-# in this rewrite as they were not the source of the errors and are not part of the
-# primary user-facing analytics flow we've been working on. They can be added back
-# if needed, but for now this provides a clean, working file.
+@bp.route('/api/segment-data')
+@login_required
+def api_segment_data():
+    """API untuk Chart.js: Pie Chart Distribusi Segmen"""
+    data = db.session.query(
+        CustomerSegment.segment_name,
+        CustomerSegment.color,
+        func.count(CustomerSegmentMembership.id)
+    ).outerjoin(
+        CustomerSegmentMembership, CustomerSegment.id == CustomerSegmentMembership.segment_id
+    ).group_by(CustomerSegment.id).all()
+    
+    results = []
+    for name, color, count in data:
+        results.append({
+            'name': name,
+            'color': color,
+            'count': count
+        })
+        
+    return jsonify(results)
+
+@bp.route('/api/rfm-data')
+@login_required
+def api_rfm_data():
+    """API untuk Chart.js: Bubble Chart Sebaran RFM"""
+    # Query Data: Join Customer -> Membership -> Segment -> Transaction
+    # Kita butuh agregat per customer
+    
+    # Subquery untuk Recency, Frequency, Monetary per Customer
+    rfm_subquery = db.session.query(
+        Transaction.customer_id,
+        func.count(Transaction.id).label('frequency'),
+        func.sum(Transaction.total_amount).label('monetary'),
+        func.max(Transaction.created_at).label('last_purchase')
+    ).group_by(Transaction.customer_id).subquery()
+    
+    # Main Query gabung dengan Segmen
+    query = db.session.query(
+        Customer.id,
+        Customer.name,
+        rfm_subquery.c.frequency,
+        rfm_subquery.c.monetary,
+        rfm_subquery.c.last_purchase,
+        CustomerSegment.segment_name,
+        CustomerSegment.color
+    ).join(
+        rfm_subquery, Customer.id == rfm_subquery.c.customer_id
+    ).join(
+        CustomerSegmentMembership, Customer.id == CustomerSegmentMembership.customer_id
+    ).join(
+        CustomerSegment, CustomerSegmentMembership.segment_id == CustomerSegment.id
+    ).all()
+    
+    results = []
+    now = datetime.now()
+    
+    for row in query:
+        recency_days = (now - row.last_purchase).days
+        results.append({
+            'customer_id': row.id,
+            'name': row.name,
+            'frequency': row.frequency,
+            'monetary': float(row.monetary) if row.monetary else 0,
+            'recency': recency_days,
+            'segment_name': row.segment_name,
+            'color': row.color
+        })
+        
+    return jsonify(results)

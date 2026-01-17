@@ -4,7 +4,7 @@ from blueprints.auth import bp
 from models.user import User
 from app import db
 # Pastikan file forms/auth.py sudah dibuat seperti di atas
-from forms.auth import LoginForm, RegistrationForm 
+from forms.auth import LoginForm 
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -43,26 +43,3 @@ def logout():
     logout_user()
     flash('Anda telah logout.', 'info')
     return redirect(url_for('auth.login'))
-
-@bp.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('sales.dashboard'))
-    
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        try:
-            user = User(username=form.username.data, email=form.email.data)
-            user.set_password(form.password.data)
-            user.role = form.role.data
-            
-            db.session.add(user)
-            db.session.commit()
-            
-            flash('Registrasi berhasil! Silakan login.', 'success')
-            return redirect(url_for('auth.login'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Terjadi kesalahan saat registrasi: {str(e)}', 'danger')
-    
-    return render_template('register.html', title='Register', form=form)

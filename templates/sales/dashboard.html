@@ -3,95 +3,105 @@
 <div class="row mb-4">
   <!-- Kartu Omset Bulanan (BARU) -->
   <div class="col-xl col-md-6 mb-4">
-    <div class="card border-start border-primary border-4 shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
-              Omset Bulan Ini
+    <a href="{{ url_for('analytics.sales_comparison') }}" class="text-decoration-none">
+      <div class="card border-start border-primary border-4 shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                Omset Bulan Ini
+              </div>
+              <div class="h5 mb-0 fw-bold text-gray-800">
+                {{ monthly_turnover | rp }}
+              </div>
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">
-              {{ monthly_turnover | rp }}
+            <div class="col-auto">
+              <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
             </div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
           </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
 
   <div class="col-xl col-md-6 mb-4">
-    <div class="card border-start border-success border-4 shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs fw-bold text-success text-uppercase mb-1">
-              Total Pelanggan
+    <a href="{{ url_for('customers.list_customers') }}" class="text-decoration-none">
+      <div class="card border-start border-success border-4 shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                Total Pelanggan
+              </div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ customers_count }}</div>
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">{{ customers_count }}</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-users fa-2x text-gray-300"></i>
+            <div class="col-auto">
+              <i class="fas fa-users fa-2x text-gray-300"></i>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
 
   <div class="col-xl col-md-6 mb-4">
-    <div class="card border-start border-info border-4 shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs fw-bold text-info text-uppercase mb-1">
-              Transaksi Hari Ini
+    <a href="{{ url_for('sales.transactions', start_date=today_date, end_date=today_date) }}" class="text-decoration-none">
+      <div class="card border-start border-info border-4 shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                Transaksi Hari Ini
+              </div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ today_transactions }}</div>
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">{{ today_transactions }}</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-receipt fa-2x text-gray-300"></i>
+            <div class="col-auto">
+              <i class="fas fa-receipt fa-2x text-gray-300"></i>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
   
   <div class="col-xl col-md-6 mb-4">
-    <div class="card border-start border-secondary border-4 shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
-              Total Produk
+    <a href="{{ url_for('products.list_products') }}" class="text-decoration-none">
+      <div class="card border-start border-secondary border-4 shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
+                Total Produk
+              </div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ products_count }}</div>
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">{{ products_count }}</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-box fa-2x text-gray-300"></i>
+            <div class="col-auto">
+              <i class="fas fa-box fa-2x text-gray-300"></i>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
 
   <div class="col-xl col-md-6 mb-4">
-    <div class="card border-start border-warning border-4 shadow h-100 py-2">
-      <div class="card-body">
-        <div class="row no-gutters align-items-center">
-          <div class="col mr-2">
-            <div class="text-xs fw-bold text-warning text-uppercase mb-1">
-              Stok Menipis
+    <a href="{{ url_for('products.list_products') }}" class="text-decoration-none">
+      <div class="card border-start border-warning border-4 shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                Stok Menipis
+              </div>
+              <div class="h5 mb-0 fw-bold text-gray-800">{{ low_stock_count }}</div>
             </div>
-            <div class="h5 mb-0 fw-bold text-gray-800">{{ low_stock_count }}</div>
-          </div>
-          <div class="col-auto">
-            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+            <div class="col-auto">
+              <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
 </div>
 

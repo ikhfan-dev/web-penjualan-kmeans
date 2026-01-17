@@ -28,8 +28,8 @@ def run_seeding(db):
     print("🌱 Memulai proses seeding database...")
 
     # --- DEFINISI TANGGAL UNTUK TIMELINE ---
-    discount_system_start_date = datetime(2025, 5, 1) # Tanggal mulai sistem diskon baru
-    pre_system_start_date = datetime(2025, 2, 1)    # Tanggal mulai data transaksi lama (Feb 2025)
+    discount_system_start_date = datetime(2025, 5, 1) # Mulai Mei (Jan-Apr Tanpa Promo)
+    pre_system_start_date = datetime(2025, 1, 1)    # Mulai 1 Jan 2025
     current_date = datetime.now()                   # Tanggal saat ini
     # ----------------------------------------
 
@@ -144,8 +144,8 @@ def run_seeding(db):
             address=customer_data['address']
         ))
 
-    # Tambah 510 data dummy dengan alamat spesifik
-    num_dummy_customers = 510
+    # Tambah 1000 data dummy dengan alamat spesifik
+    num_dummy_customers = 1000
     print(f"👥 Membuat {num_dummy_customers} data pelanggan dummy dengan alamat Limusnunggal, Sukabumi...")
     for _ in range(num_dummy_customers):
         customers.append(Customer(
@@ -161,37 +161,37 @@ def run_seeding(db):
 
     
     # D. Buat Transaksi (PENTING: Pola belanja variatif untuk K-Means)
-    print("🧾 Membuat riwayat transaksi...")
+    print("🧾 Membuat riwayat transaksi (Jan 2025 - Sekarang)...")
     transactions = []
+    covered_dates = set() # Untuk melacak tanggal yang sudah ada transaksinya
     
     # Pastikan ada produk untuk dijadikan sampel
     if not products:
         print("❌ Tidak ada produk di database untuk membuat transaksi.")
         return
 
-    # Eager load CustomerSegment dan Promotion untuk efisiensi
-    # Ini akan mengambil semua segmen dan promosi terkait di awal
-    # untuk menghindari query berulang di dalam loop transaksi
+    # Eager load CustomerSegment dan Promotion
     all_segments = CustomerSegment.query.options(joinedload(CustomerSegment.promotion)).all()
     segment_promo_map = {}
     for seg in all_segments:
-        segment_promo_map[seg.id] = seg.promotion # will be None if no promotion
+        segment_promo_map[seg.id] = seg.promotion
 
+    # --- 1. Generate Transaksi Utama per Customer ---
     for customer in customers:
-        # Tentukan tipe pelanggan secara acak untuk simulasi data real
         rand_val = random.random()
         
-        if rand_val < 0.1: # VIP
+        # Logika VIP vs Regular
+        if rand_val < 0.1: # VIP (Belanja banyak)
             num_transactions = random.randint(15, 30)
         elif rand_val < 0.4: # Frequent Buyer
             num_transactions = random.randint(5, 15)
-        else: # Occasional Shopper / At Risk / New Customer
+        else: # Occasional Shopper
             num_transactions = random.randint(1, 4)
         
         for _ in range(num_transactions):
-            # Generate a random date for the transaction within the entire simulated period
-            # Feb 2025 to current_date
+            # Acak tanggal dari 1 Jan 2025 s/d Sekarang
             trans_date = get_random_date(pre_system_start_date, current_date)
+            covered_dates.add(trans_date.date()) # Catat tanggal
             
             # Buat transaksi
             transaction = Transaction(
@@ -209,7 +209,7 @@ def run_seeding(db):
             
             for item in items:
                 qty = random.randint(1, 3)
-                price = Decimal(str(item.price)) # Pastikan Decimal untuk perhitungan
+                price = Decimal(str(item.price))
                 subtotal = price * qty
                 current_total += subtotal
                 
@@ -218,16 +218,15 @@ def run_seeding(db):
                 )
                 transaction_items_list.append(transaction_item)
             
-            # --- Perhitungan Diskon Kondisional ---
+            # --- Perhitungan Diskon Kondisional (Jan-Apr: NO, Mei+: YES) ---
             discount_amount = Decimal('0')
             if trans_date >= discount_system_start_date:
-                # Dapatkan segmen customer untuk transaksi post-diskon
                 customer_segment_membership = db.session.query(CustomerSegmentMembership)\
                                                     .filter_by(customer_id=customer.id)\
                                                     .first()
                 if customer_segment_membership:
                     segment_id = customer_segment_membership.segment_id
-                    active_promo = segment_promo_map.get(segment_id) # Ambil dari map yang sudah eager-loaded
+                    active_promo = segment_promo_map.get(segment_id)
 
                     if active_promo:
                         if active_promo.promotion_type == 'percentage_discount':
@@ -235,15 +234,58 @@ def run_seeding(db):
                         elif active_promo.promotion_type == 'fixed_discount':
                             discount_amount = Decimal(str(active_promo.promotion_value))
             
-            # Pastikan diskon tidak melebihi total
             if discount_amount > current_total:
                 discount_amount = current_total
             
             transaction.total_amount = current_total - discount_amount
             transaction.discount_amount = discount_amount
-            transaction.items = transaction_items_list # Assign items
+            transaction.items = transaction_items_list
             transactions.append(transaction)
+
+    # --- 2. Gap Filling: Pastikan Setiap Tanggal Ada Transaksi ---
+    print("🗓️  Memeriksa dan mengisi tanggal yang kosong...")
+    total_days = (current_date - pre_system_start_date).days + 1
     
+    for i in range(total_days):
+        check_date = (pre_system_start_date + timedelta(days=i)).date()
+        
+        # Jika tanggal ini belum ada di covered_dates, buat transaksi dummy
+        if check_date not in covered_dates:
+            # Buat 1-3 transaksi untuk hari kosong ini
+            num_fill_tx = random.randint(1, 3)
+            for _ in range(num_fill_tx):
+                # Pilih customer random
+                random_cust = random.choice(customers)
+                
+                # Set jam random di tanggal tersebut
+                tx_datetime = datetime.combine(check_date, datetime.min.time()) + timedelta(hours=random.randint(8, 20), minutes=random.randint(0, 59))
+                
+                transaction = Transaction(
+                    customer_id=random_cust.id, user_id=random.choice(user_ids),
+                    total_amount=0, created_at=tx_datetime
+                )
+                
+                # Item simple
+                item = random.choice(products)
+                qty = 1
+                price = Decimal(str(item.price))
+                total = price * qty
+                
+                t_item = TransactionItem(product_id=item.id, quantity=qty, price=item.price)
+                
+                # Cek Promo (Mei+)
+                disc = Decimal('0')
+                if tx_datetime >= discount_system_start_date:
+                     # Simple logic for gap filler: random small discount chance if promo era
+                     pass # Biarkan 0 untuk simplicity di gap filler, atau copy logic full jika perlu
+                
+                transaction.total_amount = total - disc
+                transaction.discount_amount = disc
+                transaction.items = [t_item]
+                transactions.append(transaction)
+            
+            covered_dates.add(check_date) # Tandai sudah diisi
+
     db.session.add_all(transactions)
     db.session.commit()
     
