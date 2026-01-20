@@ -109,9 +109,10 @@ def create_app(config_class=Config):
 
     return app
 
+# Instance aplikasi global untuk Gunicorn
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     # Debug mode dikontrol oleh environment variable FLASK_DEBUG
-    # Ganti FLASK_DEBUG=1 di .env untuk mengaktifkan
     is_debug_mode = app.config.get('DEBUG', False)
     app.run(debug=is_debug_mode)
