@@ -2,8 +2,8 @@ import random
 from datetime import datetime, timedelta
 from faker import Faker
 import json
-from sqlalchemy.orm import joinedload # <-- ADDED THIS IMPORT
-from decimal import Decimal # <-- ADDED THIS IMPORT
+from sqlalchemy.orm import joinedload
+from decimal import Decimal
 
 # Helper function untuk mendapatkan tanggal acak dalam rentang
 def get_random_date(start_date, end_date):
@@ -170,6 +170,10 @@ def run_seeding(db):
         print("❌ Tidak ada produk di database untuk membuat transaksi.")
         return
 
+    # Commit dulu pelanggan dan produk agar ID-nya tersedia
+    db.session.commit() # <--- PENTING: Commit pelanggan sebelum dipakai di transaksi
+    print("✅ Pelanggan dan Produk tersimpan. Mulai generate transaksi...")
+
     # Eager load CustomerSegment dan Promotion
     all_segments = CustomerSegment.query.options(joinedload(CustomerSegment.promotion)).all()
     segment_promo_map = {}
@@ -177,6 +181,8 @@ def run_seeding(db):
         segment_promo_map[seg.id] = seg.promotion
 
     # --- 1. Generate Transaksi Utama per Customer ---
+    transaction_count = 0
+    
     for customer in customers:
         rand_val = random.random()
         
@@ -220,19 +226,8 @@ def run_seeding(db):
             
             # --- Perhitungan Diskon Kondisional (Jan-Apr: NO, Mei+: YES) ---
             discount_amount = Decimal('0')
-            if trans_date >= discount_system_start_date:
-                customer_segment_membership = db.session.query(CustomerSegmentMembership)\
-                                                    .filter_by(customer_id=customer.id)\
-                                                    .first()
-                if customer_segment_membership:
-                    segment_id = customer_segment_membership.segment_id
-                    active_promo = segment_promo_map.get(segment_id)
-
-                    if active_promo:
-                        if active_promo.promotion_type == 'percentage_discount':
-                            discount_amount = current_total * (Decimal(str(active_promo.promotion_value)) / 100)
-                        elif active_promo.promotion_type == 'fixed_discount':
-                            discount_amount = Decimal(str(active_promo.promotion_value))
+            # Logic diskon di-skip untuk seeding awal karena K-Means belum lari
+            # Atau bisa diimplementasikan random diskon di sini jika diinginkan
             
             if discount_amount > current_total:
                 discount_amount = current_total
@@ -241,9 +236,25 @@ def run_seeding(db):
             transaction.discount_amount = discount_amount
             transaction.items = transaction_items_list
             transactions.append(transaction)
+            transaction_count += 1
+            
+            # Commit per 500 transaksi agar memori tidak penuh
+            if len(transactions) >= 500:
+                 db.session.add_all(transactions)
+                 db.session.commit()
+                 transactions = []
+                 print(f"   ...Saved batch {transaction_count} transactions")
+
+    # Save sisa transaksi
+    if transactions:
+        db.session.add_all(transactions)
+        db.session.commit()
+        
+    print(f"✅ Selesai generate {transaction_count} transaksi utama.")
 
     # --- 2. Gap Filling: Pastikan Setiap Tanggal Ada Transaksi ---
     print("🗓️  Memeriksa dan mengisi tanggal yang kosong...")
+    transactions = [] # Reset
     total_days = (current_date - pre_system_start_date).days + 1
     
     for i in range(total_days):
@@ -273,21 +284,17 @@ def run_seeding(db):
                 
                 t_item = TransactionItem(product_id=item.id, quantity=qty, price=item.price)
                 
-                # Cek Promo (Mei+)
-                disc = Decimal('0')
-                if tx_datetime >= discount_system_start_date:
-                     # Simple logic for gap filler: random small discount chance if promo era
-                     pass # Biarkan 0 untuk simplicity di gap filler, atau copy logic full jika perlu
-                
-                transaction.total_amount = total - disc
-                transaction.discount_amount = disc
+                transaction.total_amount = total 
+                transaction.discount_amount = 0
                 transaction.items = [t_item]
                 transactions.append(transaction)
             
             covered_dates.add(check_date) # Tandai sudah diisi
 
-    db.session.add_all(transactions)
-    db.session.commit()
+    if transactions:
+        db.session.add_all(transactions)
+        db.session.commit()
+    print("✅ Gap filling selesai.")
     
     # E. Jalankan K-Means Otomatis
     print("🔍 Menjalankan analisis K-Means & Sorting Segmen...")
