@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -97,6 +97,21 @@ def create_app(config_class=Config):
     def index():
         from flask import redirect, url_for
         return redirect(url_for('auth.login'))
+        
+    # --- RUTE KHUSUS UNTUK SEEDING DI RENDER (FREE TIER) ---
+    @app.route('/setup-db-render')
+    def setup_db_manual():
+        # Pengaman sederhana: Butuh parameter ?key=rahasia
+        key = request.args.get('key')
+        if key != 'rahasia123':
+            return "Akses ditolak. Kunci salah."
+            
+        try:
+            from utils.seeder import run_seeding
+            run_seeding(db)
+            return "✅ SUCCESS: Database berhasil di-seed! Silakan kembali ke halaman login."
+        except Exception as e:
+            return f"❌ ERROR: {str(e)}"
     
     # --- 5. CLI COMMAND: SEED DB ---
     @app.cli.command("seed-db")
