@@ -1,6 +1,6 @@
 python -m venv venv
 .\venv\Scripts\activate
-pip install flask flask-sqlalchemy flask-migrate flask-login flask-wtf wtforms pandas numpy scikit-learn faker pymysql python-dotenv
+pip install -r requirements.txt
 buat database dengan nama "penjualan_db"
 flask db init
 flask db migrate -m "Initial migration"
