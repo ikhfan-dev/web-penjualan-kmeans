@@ -226,7 +226,7 @@ def kmeans_results():
         .join(CustomerSegment, CustomerSegmentMembership.segment_id == CustomerSegment.id)
         .join(Customer, CustomerSegmentMembership.customer_id == Customer.id)
         .outerjoin(Transaction, Customer.id == Transaction.customer_id)
-        .group_by(CustomerSegmentMembership.customer_id, CustomerSegment.id, CustomerSegment.segment_name, CustomerSegment.color)
+        .group_by(CustomerSegmentMembership.customer_id, CustomerSegment.id, CustomerSegment.segment_name, CustomerSegment.color, Customer.id, Customer.name)
         .all()
     )
 
