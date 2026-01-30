@@ -167,8 +167,8 @@ Hasil segmentasi default sistem akan menghasilkan kategori:
 ### Langkah 1: Clone Repository
 
 ```bash
-git clone <repository-url>
-cd tugas-penjualan-kmeans
+git clone https://github.com/Kemalti21a/web-penjualan-kmeans.git
+cd web-penjualan-kmeans
 ```
 
 ### Langkah 2: Buat Virtual Environment
